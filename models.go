@@ -2,8 +2,6 @@ package library
 
 type TableContext struct {
 	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	MetaTags    string          `json:"meta_tags"`
 	Data        []ColumnContext `json:"data"`
 	ColumnCount int64           `json:"column_count"`
 }
