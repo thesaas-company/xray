@@ -1,9 +1,11 @@
-package sql
+package library
 
 import (
 	"database/sql"
 	"encoding/json"
 	"log"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type TableContext struct {
@@ -23,14 +25,14 @@ type ISQL interface {
 	Tables(database string) ([]string, error)
 }
 
-func NewSQL(cfg *config.Config) (ISQL, error) {
-	switch cfg.Type {
+func NewSQL(cfg *Config) (ISQL, error) {
+	switch cfg.DBType {
 	case "mysql":
 		return NewMysqlRepo(cfg)
 	case "postgres":
 		return NewPostgresRepo(cfg)
-	case "redshift":
-		return NewRedshiftRepo(cfg)
+	// case "redshift":
+	// 	return NewRedshiftRepo(cfg)
 	case "snowflake":
 		return NewSnowflakeRepo(cfg)
 	case "bigquery":

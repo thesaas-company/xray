@@ -1,4 +1,4 @@
-package sql
+package library
 
 import (
 	"database/sql"
@@ -11,7 +11,7 @@ import (
 // SnowflakeRepo is a repository for interacting with Snowflake databases.
 type SnowflakeRepo struct {
 	Client *sql.DB
-	Config *config.Config
+	Config *Config
 }
 
 // Schema retrieves the schema information for the specified tables in Snowflake.
@@ -57,7 +57,7 @@ func (r SnowflakeRepo) Execute(query string) ([]map[string]interface{}, error) {
 
 // Tables retrieves the names of tables in the specified Snowflake database.
 func (r SnowflakeRepo) Tables(_ string) ([]string, error) {
-	query := fmt.Sprintf("USE WAREHOUSE %s", r.Config.Database.Warehouse)
+	query := fmt.Sprintf("USE WAREHOUSE %s", r.Config.Warehouse)
 
 	_, err := r.Client.Query(query)
 	if err != nil {
@@ -91,18 +91,19 @@ func (r SnowflakeRepo) Tables(_ string) ([]string, error) {
 }
 
 // NewSnowflakeRepo creates a new Snowflake repository based on the provided configuration.
-func NewSnowflakeRepo(cfg *config.Config) (ISQL, error) {
+func NewSnowflakeRepo(cfg *Config) (ISQL, error) {
 	dns, err := sf.DSN(&sf.Config{
-		Account:   cfg.Database.Account,
+		Account:   cfg.Account,
 		User:      cfg.Database.Username,
-		Password:  constant.DataSherlockPassword,
-		Database:  cfg.Database.Database,
-		Warehouse: cfg.Database.Warehouse,
+		// Password:  constant.DataSherlockPassword,
+		Password: cfg.Database.Password,
+		Database:  cfg.Database.DatabaseName,
+		Warehouse: cfg.Warehouse,
 	})
 	if err != nil {
 		return nil, err
 	}
-	db, err := sql.Open(cfg.Type, dns)
+	db, err := sql.Open(string(cfg.DBType), dns)
 	if err != nil {
 		return nil, err
 	}

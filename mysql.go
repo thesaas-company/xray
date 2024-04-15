@@ -1,23 +1,22 @@
-package sql
+package library
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
-
-
 	_ "github.com/go-sql-driver/mysql"
 )
 
 // dbURL generates a MySQL database URL based on the configuration.
-func dbURL(dbConfig *config.DatabaseSpec) string {
+func dbURL(dbConfig *DatabaseConfig) string {
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",
 		dbConfig.Username,
-		constant.DataSherlockPassword,
+		dbConfig.Password,
+		// constant.DataSherlockPassword,
 		dbConfig.Host,
-		dbConfig.Database,
+		dbConfig.DatabaseName,
 		dbConfig.SSL,
 	)
 }
@@ -93,11 +92,11 @@ func (r MysqlRepo) Tables(database string) ([]string, error) {
 }
 
 // NewMysqlRepo creates a new MySQL repository based on the provided configuration.
-func NewMysqlRepo(cfg *config.Config) (ISQL, error) {
+func NewMysqlRepo(cfg *Config) (ISQL, error) {
 	if os.Getenv("DB_PASSWORD") == "" || len(os.Getenv("DB_PASSWORD")) == 0 {
 		return nil, fmt.Errorf("please set DB_PASSWORD env variable for the database")
 	}
-	db, err := sql.Open(cfg.Type, dbURL(&cfg.Database))
+	db, err := sql.Open(cfg.DBType, dbURL(&cfg.Database))
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

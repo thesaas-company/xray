@@ -1,4 +1,4 @@
-package sql
+package library
 
 import (
 	"database/sql"
@@ -78,9 +78,8 @@ func (r PostgresRepo) Tables(_ string) ([]string, error) {
 	return tableNames, nil
 }
 
-// NewPostgresRepo creates a new PostgreSQL repository based on the provided configuration.
-func NewPostgresRepo(cfg *config.Config) (ISQL, error) {
-	db, err := sql.Open(cfg.Type, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Database.Host, cfg.Database.Port, cfg.Database.Username, constant.DataSherlockPassword, cfg.Database.Database, cfg.Database.SSL))
+func NewPostgresRepo(cfg *Config) (ISQL, error) {
+	db, err := sql.Open(cfg.DBType, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Database.Host, cfg.Database.Port, cfg.Database.Username, cfg.Database.Password, cfg.Database.DatabaseName, cfg.Database.SSL))
 	if err != nil {
 		return nil, err
 	}

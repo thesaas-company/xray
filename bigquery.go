@@ -1,4 +1,4 @@
-package sql
+package library
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 // BigQueryRepo is a repository for interacting with BigQuery.
 type BigQueryRepo struct {
 	Client *bigquery.Client
-	Config *config.Config
+	Config *Config
 }
 
 // Schema retrieves the schema information for the specified tables in BigQuery.
@@ -24,7 +24,7 @@ func (r BigQueryRepo) Schema(tables []string) ([]TableContext, int64, error) {
 
 	ctx := context.Background()
 	for _, table := range tables {
-		tableRef := r.Client.Dataset(r.Config.Database.Database).Table(table)
+		tableRef := r.Client.Dataset(r.Config.Database.DatabaseName).Table(table)
 		schemaInfo, err := tableRef.Metadata(ctx)
 		if err != nil {
 			return nil, 0, err
@@ -105,7 +105,7 @@ func (r BigQueryRepo) Tables(dataset string) ([]string, error) {
 }
 
 // NewBigQueryRepo creates a new BigQuery repository based on the provided configuration.
-func NewBigQueryRepo(cfg *config.Config) (ISQL, error) {
+func NewBigQueryRepo(cfg *Config) (ISQL, error) {
 	ctx := context.Background()
 	client, err := bigquery.NewClient(ctx, cfg.Database.ProjectID, option.WithCredentialsFile(cfg.Database.JSONKeyPath))
 	if err != nil {
