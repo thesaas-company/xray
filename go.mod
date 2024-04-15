@@ -1,4 +1,4 @@
-module github.com/adarsh-jaiss/library
+module github.com/adarsh-jaiss/library/sample
 
 go 1.22.1
 

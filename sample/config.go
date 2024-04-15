@@ -1,8 +1,4 @@
-package library
-
-import (
-	"fmt"
-)
+package sample
 
 type DatabaseConfig struct {
 	Host         string `yaml:"host" pflag:",Database host url"`
@@ -47,20 +43,4 @@ func NewConfig(conig Config) *Config {
 
 }
 
-// NewClient creates a new configuration client.
-func NewClient(config *Config, dbType string) (ISQL, error) {
-	switch dbType {
-	case "mysql":
-		return NewMysqlRepo(config)
-	case "postgres":
-		return NewPostgresRepo(config)
-	// case "redshift":
-	//     return NewRedshiftRepo(config)
-	case "snowflake":
-		return NewSnowflakeRepo(config)
-	case "bigquery":
-		return NewBigQueryRepo(config)
-	default:
-		return nil, fmt.Errorf("unsupported database type: %s", dbType)
-	}
-}
+
