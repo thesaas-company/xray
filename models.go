@@ -15,6 +15,11 @@ type ColumnContext struct {
 	// Visibility  bool   `json:"visibility"`
 }
 
+type QueryResult struct {
+	Columns []string `json:"columns"`
+	Rows   [][]interface{}    `json:"rows"`
+}
+
 type ISQL interface {
 	Schema(table string) ([]byte, error)
 	Execute(query string) ([]byte, error)
