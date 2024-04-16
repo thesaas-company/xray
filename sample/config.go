@@ -3,7 +3,7 @@ package sample
 type DatabaseConfig struct {
 	Host         string `yaml:"host" pflag:",Database host url"`
 	Username     string `yaml:"username" pflag:",Database username"`
-    Password     string `yaml:"password" pflag:",Database password"`
+	Password     string `yaml:"password" pflag:",Database password"`
 	DatabaseName string `yaml:"database" pflag:",Database name"`
 	Port         string `yaml:"port" pflag:",Database Port"`
 	SSL          string `yaml:"ssl" pflag:",Database ssl enable/disable"`
@@ -19,7 +19,7 @@ type Config struct {
 	Warehouse string         `yaml:"warehouse" pflag:",Snowflake warehouse"`
 	Schema    string         `yaml:"schema" pflag:",Snowflake database schema"`
 	Account   string         `yaml:"account" pflag:",Snowflake account ID"`
-	DBType    string   `yaml:"type" pflag:",Database type"`
+	DBType    string         `yaml:"type" pflag:",Database type"`
 }
 
 func NewConfig(conig Config) *Config {
@@ -27,7 +27,7 @@ func NewConfig(conig Config) *Config {
 		Database: DatabaseConfig{
 			Host:         conig.Database.Host,
 			Username:     conig.Database.Username,
-            Password:     conig.Database.Password,
+			Password:     conig.Database.Password,
 			DatabaseName: conig.Database.DatabaseName,
 			Port:         conig.Database.Port,
 			SSL:          conig.Database.SSL,
@@ -42,5 +42,3 @@ func NewConfig(conig Config) *Config {
 	}
 
 }
-
-

@@ -70,6 +70,9 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 		if err := rows.Scan(&column.ColumnName, &column.ColumnKey, &column.DataType); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
+		column.Description = ""  // default description
+        column.Metatags = ""     // default metatags
+        column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
 
@@ -82,6 +85,9 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 		Name:        table,
 		Data:        columns,
 		ColumnCount: int64(len(columns)),
+		Description: "", 
+		Metatags:    "", 
+		
 	}
 
 	// convert the table context to json
@@ -151,7 +157,41 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 
 // Retrieve the names of tables in the specified database.
 func (m *MySQL) Tables(database string) ([]byte, error) {
-	return nil, nil
+	statememt, err := m.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema = ?")
+	if err != nil {
+		return nil, fmt.Errorf("error preparing sql statement: %v", err)
+	}
+	defer statememt.Close()
+
+	// execute the sql statement
+	rows,err := statememt.Query(database)
+	if err!= nil{
+		return nil, fmt.Errorf("error executing sql statement: %v", err)
+	}
+	defer rows.Close()
+
+	//scan and append the result
+	var tables []string
+	for rows.Next(){
+		var table string
+		if err := rows.Scan(&table); err!= nil{
+			return nil, fmt.Errorf("error scanning rows: %v",err)
+		}
+		tables = append(tables, table)
+	}
+
+	// checking for errors in iterating over rows
+	if err := rows.Err(); err!= nil{
+		return nil, fmt.Errorf("error iterating over rows:%v",err)
+	}
+
+	// convert the result to json
+	jsonData,err := json.Marshal(tables)
+	if err!= nil{
+		return nil,fmt.Errorf("error marshalling json: %v",err)
+	}
+
+	return jsonData, nil
 }
 
 //  Generate an interface based on the specified database type.

@@ -4,20 +4,22 @@ type TableContext struct {
 	Name        string          `json:"name"`
 	Data        []ColumnContext `json:"data"`
 	ColumnCount int64           `json:"column_count"`
+	Description string          `json:"description"`
+	Metatags    string          `json:"metatags"`
 }
 
 type ColumnContext struct {
 	ColumnName  string `json:"column_name"`
 	ColumnKey   string `json:"column_key"`
 	DataType    string `json:"data_type"`
-	// Description string `json:"description"`
-	// Metatags    string `json:"metatags"`
-	// Visibility  bool   `json:"visibility"`
+	Description string `json:"description"`
+	Metatags    string `json:"metatags"`
+	Visibility  bool   `json:"visibility"`
 }
 
 type QueryResult struct {
-	Columns []string `json:"columns"`
-	Rows   [][]interface{}    `json:"rows"`
+	Columns []string        `json:"columns"`
+	Rows    [][]interface{} `json:"rows"`
 }
 
 type ISQL interface {
@@ -26,8 +28,3 @@ type ISQL interface {
 	Tables(database string) ([]byte, error)
 	NewClient(dbType string) (ISQL, error)
 }
-
-
-
-
-
