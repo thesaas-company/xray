@@ -10,16 +10,27 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// TODO: Move mysql logic in a seprate file
 type MySQL struct {
 	Client *sql.DB
 }
 
-func NewMySQL(db *sql.DB) ISQL {
+func NewMySQL(dbConfig *sample.DatabaseConfig) (ISQL, error) {
+	if os.Getenv("DB_PASSWORD") == "" || len(os.Getenv("DB_PASSWORD")) == 0 {
+		return nil, fmt.Errorf("please set DB_PASSWORD env variable for the database")
+	}
+	dsn := dbURL(dbConfig)
+	db, err := sql.Open(config.DBType, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("error opening connection to database: %v", err)
+	}
 	return &MySQL{
 		Client: db,
 	}
+	
 }
 
+// TODO: Util function, Move to a different file, Also rename dbURLMySQL
 func dbURL(dbConfig *sample.DatabaseConfig) string {
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",
@@ -29,20 +40,6 @@ func dbURL(dbConfig *sample.DatabaseConfig) string {
 		dbConfig.DatabaseName,
 		dbConfig.SSL,
 	)
-}
-
-func NewMysqlConnection(config *sample.Config) (ISQL, error) {
-	// if os.Getenv("DB_PASSWORD") == "" || len(os.Getenv("DB_PASSWORD")) == 0 {
-	// 	return nil, fmt.Errorf("please set DB_PASSWORD env variable for the database")
-	// }
-
-	db, err := sql.Open(config.DBType, dbURL(&config.Database))
-	if err != nil {
-		return nil, fmt.Errorf("error opening connection to database: %v", err)
-	}
-	return &MySQL{
-		Client: db,
-	}, nil
 }
 
 // This method will accept a table name as input and return the table schema (structure).
@@ -196,10 +193,10 @@ func (m *MySQL) Tables(databaseName string) ([]byte, error) {
 }
 
 //  Generate an interface based on the specified database type.
-func (m *MySQL) NewClient(dbType string) (ISQL, error) {
+func NewClient(dbConfig *sample.DatabaseConfig, dbType string) (ISQL, error) {
 	switch dbType {
 	case "mysql":
-		return &MySQL{},nil
+		return NewMysql(dbConfig)
 	// case "postgres":
 	// 	return &Postgres{},nil
 	// case "snowflake":
