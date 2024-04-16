@@ -48,6 +48,7 @@ func NewMysqlConnection(config *sample.Config) (ISQL, error) {
 // This method will accept a table name as input and return the table schema (structure).
 func (m *MySQL) Schema(table string) ([]byte, error) {
 	// prepare the sql statement
+	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
 	statement, err := m.Client.Prepare("DESCRIBE" + table)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
@@ -156,7 +157,7 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 }
 
 // Retrieve the names of tables in the specified database.
-func (m *MySQL) Tables(database string) ([]byte, error) {
+func (m *MySQL) Tables(databaseName string) ([]byte, error) {
 	statememt, err := m.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema = ?")
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
@@ -164,7 +165,7 @@ func (m *MySQL) Tables(database string) ([]byte, error) {
 	defer statememt.Close()
 
 	// execute the sql statement
-	rows,err := statememt.Query(database)
+	rows,err := statememt.Query(databaseName)
 	if err!= nil{
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
@@ -196,5 +197,22 @@ func (m *MySQL) Tables(database string) ([]byte, error) {
 
 //  Generate an interface based on the specified database type.
 func (m *MySQL) NewClient(dbType string) (ISQL, error) {
-	return nil, nil
+	switch dbType {
+	case "mysql":
+		return &MySQL{},nil
+	// case "postgres":
+	// 	return &Postgres{},nil
+	// case "snowflake":
+	// 	return &SnowFlake{},nil
+	// case "bigquery":
+	// 	return &Bigquery{},nil
+	// case "redshift":
+	// 	return &RedShift{},nil
+	default:
+			return nil, fmt.Errorf("unsupported database type: %s", dbType)
+	}
 }
+	
+
+
+

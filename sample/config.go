@@ -37,7 +37,6 @@ func NewConfig(conig Config) *Config {
 		Debug:     conig.Debug,
 		Warehouse: conig.Warehouse,
 		Schema:    conig.Schema,
-
 		Account: conig.Account,
 	}
 

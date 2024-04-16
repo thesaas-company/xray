@@ -22,9 +22,16 @@ type QueryResult struct {
 	Rows    [][]interface{} `json:"rows"`
 }
 
+// type ISQL interface {
+// 	Schema(table string) ([]byte, error)
+// 	Execute(query string) ([]byte, error)
+// 	Tables(databaseName string) ([]byte, error)
+// 	NewClient(dbType string) (ISQL, error)
+// }
+
 type ISQL interface {
-	Schema(table string) ([]byte, error)
-	Execute(query string) ([]byte, error)
-	Tables(database string) ([]byte, error)
-	NewClient(dbType string) (ISQL, error)
+	Schema(string) ([]byte, error)
+	Execute(string) ([]byte, error)
+	Tables(string) ([]byte, error)
+	NewClient(string) (ISQL, error)
 }
