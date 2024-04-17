@@ -79,7 +79,7 @@ func (r PostgresRepo) Tables(_ string) ([]string, error) {
 }
 
 func NewPostgresRepo(cfg *Config) (ISQL, error) {
-	db, err := sql.Open(cfg.DBType, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Database.Host, cfg.Database.Port, cfg.Database.Username, cfg.Database.Password, cfg.Database.DatabaseName, cfg.Database.SSL))
+	db, err := sql.Open(cfg.Database.DBType, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Database.Host, cfg.Database.Port, cfg.Database.Username, cfg.Database.Password, cfg.Database.DatabaseName, cfg.Database.SSL))
 	if err != nil {
 		return nil, err
 	}

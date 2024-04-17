@@ -103,7 +103,7 @@ func NewSnowflakeRepo(cfg *Config) (ISQL, error) {
 	if err != nil {
 		return nil, err
 	}
-	db, err := sql.Open(string(cfg.DBType), dns)
+	db, err := sql.Open(string(cfg.Database.DBType), dns)
 	if err != nil {
 		return nil, err
 	}

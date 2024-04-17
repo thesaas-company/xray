@@ -26,7 +26,7 @@ type ISQL interface {
 }
 
 func NewSQL(cfg *Config) (ISQL, error) {
-	switch cfg.DBType {
+	switch cfg.Database.DBType {
 	case "mysql":
 		return NewMysqlRepo(cfg)
 	case "postgres":

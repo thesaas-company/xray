@@ -1,5 +1,7 @@
 package library
 
+import "github.com/adarsh-jaiss/library/sample/sample"
+
 type TableContext struct {
 	Name        string          `json:"name"`
 	Data        []ColumnContext `json:"data"`
@@ -33,5 +35,5 @@ type ISQL interface {
 	Schema(string) ([]byte, error)
 	Execute(string) ([]byte, error)
 	Tables(string) ([]byte, error)
-	NewClient(string) (ISQL, error)
+	NewClient(*sample.DatabaseConfig ,string) (ISQL, error)
 }

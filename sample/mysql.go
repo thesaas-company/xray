@@ -96,7 +96,7 @@ func NewMysqlRepo(cfg *Config) (ISQL, error) {
 	if os.Getenv("DB_PASSWORD") == "" || len(os.Getenv("DB_PASSWORD")) == 0 {
 		return nil, fmt.Errorf("please set DB_PASSWORD env variable for the database")
 	}
-	db, err := sql.Open(cfg.DBType, dbURL(&cfg.Database))
+	db, err := sql.Open(cfg.Database.DBType, dbURL(&cfg.Database))
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
