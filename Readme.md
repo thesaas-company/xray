@@ -9,10 +9,6 @@ go get github.com/lib/pq
 go get github.com/snowflakedb/gosnowflake
 ```
 
-### Testing mysql.go
-
-- Define vars which include DB configs to create a DB URL, for connection
-- TODO : Test via passing DB Password in env varibale
 
 ### Running docker-compose to test mysql
 

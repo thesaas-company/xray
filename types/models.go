@@ -44,3 +44,4 @@ type ISQL interface {
 	Tables(string) ([]byte, error)
 	NewClient(*sample.DatabaseConfig ,string) (ISQL, error)
 }
+

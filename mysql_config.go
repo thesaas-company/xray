@@ -18,23 +18,24 @@ type MySQL struct {
 
 func NewMySQL(dbConfig *sample.DatabaseConfig) (types.ISQL, error) {
 	err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	if os.Getenv("MYSQL_DB_PASSWORD") == "" || len(os.Getenv("MYSQL_DB_PASSWORD")) == 0 { // added mysql to be more verbose about the db type
-		return nil, fmt.Errorf("please set MYSQL_DB_PASSWORD env variable for the database")  
+		return nil, fmt.Errorf("please set MYSQL_DB_PASSWORD env variable for the database")
 	}
 	dsn := dbURLMySQL(dbConfig)
-	
+
 	db, err := sql.Open(dbConfig.DBType, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error opening connection to database: %v", err)
 	}
+
 	return &MySQL{
 		Client: db,
-	},nil
-	
+	}, nil
+
 }
 
 func dbURLMySQL(dbConfig *sample.DatabaseConfig) string {
