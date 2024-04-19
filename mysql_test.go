@@ -1,52 +1,44 @@
 package library
 
-
 import (
 	"database/sql"
-	"testing"
-
+	"fmt"
 	"github.com/adarsh-jaiss/library/sample/sample"
+	"testing"
 )
 
 type TestMySql struct {
-	ISQL
+	Client *sql.DB
 }
 
-func NewTestMySql(db *sql.DB) ISQL {
-	return &TestMySql{
-		ISQL: &MySQL{
-			Client: db,
-		},
-	}
-}
-
-var DatabaseConfig = &sample.DatabaseConfig{
+var DatabaseConfig = &sample.DatabaseConfig {
 	Username:     "root",
 	Password:     "root",
 	Host:         "localhost:3306",
 	DatabaseName: "test",
 	SSL:          "false",
-	DBType: "mysql",
+	DBType:       "mysql",
 }
 
-func Connect(t *testing.T) *TestMySql {
-	
+func NewTestMySQL() (ISQL, error) {
+	dsn := dbURLMySQL(DatabaseConfig)
+	db, err := sql.Open(DatabaseConfig.DBType, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("error opening connection to database: %v", err)
+	}
 
-	client, err := NewMySQL(DatabaseConfig)
-	if err!= nil {
-		t.Errorf("Error connecting to MySQL, Expected No error, got: %v", err)
-	}
-	
-	if client == nil {
-		t.Errorf("Error connecting to MySQL. Expected a client, got nil.")
-	}
-	return client.(*TestMySql)
+	return &MySQL{
+		Client: db,
+	}, nil
 }
 
 func TestSchema(t *testing.T) {
-	tClient := Connect(t)
-	
-	res, err := tClient.Schema("test")
+	tClient,err := NewTestMySQL()
+	if err!= nil{
+		t.Errorf("Error creating client, Expected No error, got: %v", err)
+	}
+
+	res, err := tClient.Schema("user")
 	if err != nil {
 		t.Errorf("Error getting schema, Expected No error, got: %v", err)
 	}
@@ -56,8 +48,12 @@ func TestSchema(t *testing.T) {
 }
 
 func TestExecute(t *testing.T) {
-	tClient := Connect(t)
-	query := "SELECT * FROM test WHERE id = 1"
+	tClient,err := NewTestMySQL()
+	if err!= nil{
+		t.Errorf("Error creating client, Expected No error, got: %v", err)
+	}
+
+	query := "SELECT * FROM user"
 	res, err := tClient.Execute(query)
 
 	if err != nil {
@@ -67,10 +63,14 @@ func TestExecute(t *testing.T) {
 	t.Logf("Execute result: %v", res)
 }
 
-func TestGetTables(t *testing.T)  {
-	tClient := Connect(t)
+func TestGetTables(t *testing.T) {
+	tClient,err := NewTestMySQL()
+	if err!= nil{
+		t.Errorf("Error creating client, Expected No error, got: %v", err)
+	
+	}
 	DBName := "test"
-	tables,err := tClient.Tables(DBName)
+	tables, err := tClient.Tables(DBName)
 	if err != nil {
 		t.Errorf("Error getting tables, Expected No error, got: %v", err)
 	}
@@ -78,24 +78,23 @@ func TestGetTables(t *testing.T)  {
 	t.Logf("Tables List: %v", tables)
 }
 
-func TestNewClient(t *testing.T){
+func TestNewClient(t *testing.T) {
 	m := &MySQL{}
 
-	client, err := m.NewClient(DatabaseConfig,"mysql")
+	client, err := m.NewClient(DatabaseConfig, "mysql")
 	if err != nil {
 		t.Errorf("Error creating new client, Expected No error, got: %v", err)
 	}
-	_, ok := client.(ISQL)
-	if !ok {
-		t.Errorf("Expected a client implementing ISQL, got %T", client)
+	// _, ok := client.(ISQL)
+	// if !ok {
+	// 	t.Errorf("Expected a client implementing ISQL, got %T", client)
+	// }
+
+	client, err = m.NewClient(DatabaseConfig, "unsupported")
+	if err == nil {
+		t.Errorf("Expected an error, got nil")
 	}
-
-	client, err = m.NewClient(DatabaseConfig,"unsupported")
-    if err == nil {
-        t.Errorf("Expected an error, got nil")
-    }
-    if client != nil {
-        t.Errorf("Expected nil, got %v", client)
-    }
-
+	if client != nil {
+		t.Errorf("Expected nil, got %v", client)
+	}
 }

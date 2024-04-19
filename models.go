@@ -1,6 +1,10 @@
 package library
 
-import "github.com/adarsh-jaiss/library/sample/sample"
+import (
+	"database/sql"
+
+	"github.com/adarsh-jaiss/library/sample/sample"
+)
 
 type TableContext struct {
 	Name        string          `json:"name"`
@@ -11,12 +15,15 @@ type TableContext struct {
 }
 
 type ColumnContext struct {
-	ColumnName  string `json:"column_name"`
-	ColumnKey   string `json:"column_key"`
-	DataType    string `json:"data_type"`
-	Description string `json:"description"`
-	Metatags    string `json:"metatags"`
-	Visibility  bool   `json:"visibility"`
+    ColumnName   string        `json:"column_name"`
+    DataType     string        `json:"data_type"`
+    IsNullable   string        `json:"is_nullable"`
+    ColumnKey    string        `json:"column_key"`
+    DefaultValue sql.NullString `json:"default_value"`
+    Extra        string        `json:"extra"`
+    Description  string        `json:"description"`
+    Metatags     string        `json:"metatags"`
+    Visibility   bool          `json:"visibility"`
 }
 
 type QueryResult struct {

@@ -14,7 +14,7 @@ import (
 func (m *MySQL) Schema(table string) ([]byte, error) {
 	// prepare the sql statement
 	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
-	statement, err := m.Client.Prepare("DESCRIBE" + table)
+	statement, err := m.Client.Prepare("DESCRIBE " + table)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -33,12 +33,12 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 	var columns []ColumnContext
 	for rows.Next() {
 		var column ColumnContext
-		if err := rows.Scan(&column.ColumnName, &column.ColumnKey, &column.DataType); err != nil {
+		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""  // default description
-        column.Metatags = ""     // default metatags
-        column.Visibility = true // default visibility
+		column.Metatags = ""     // default metatags
+		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
 
