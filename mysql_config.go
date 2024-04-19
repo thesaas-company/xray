@@ -5,6 +5,9 @@ import (
 	"os"
 	"github.com/adarsh-jaiss/library/sample/sample"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 type MySQL struct {
@@ -12,6 +15,12 @@ type MySQL struct {
 }
 
 func NewMySQL(dbConfig *sample.DatabaseConfig) (ISQL, error) {
+	err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
+
+
 	if os.Getenv("DB_PASSWORD") == "" || len(os.Getenv("DB_PASSWORD")) == 0 {
 		return nil, fmt.Errorf("please set DB_PASSWORD env variable for the database")
 	}

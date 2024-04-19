@@ -5,6 +5,7 @@ go 1.22.1
 require (
 	cloud.google.com/go/bigquery v1.60.0
 	github.com/go-sql-driver/mysql v1.8.1
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/snowflakedb/gosnowflake v1.9.0
 	google.golang.org/api v0.172.0

@@ -3,33 +3,54 @@ package library
 import (
 	"database/sql"
 	"fmt"
-	"github.com/adarsh-jaiss/library/sample/sample"
+	"log"
+	"os"
 	"testing"
+	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/joho/godotenv"
 )
 
 type TestMySql struct {
 	Client *sql.DB
 }
 
-var DatabaseConfig = &sample.DatabaseConfig {
-	Username:     "root",
-	Password:     "root",
-	Host:         "localhost:3306",
-	DatabaseName: "test",
-	SSL:          "false",
-	DBType:       "mysql",
-}
-
 func NewTestMySQL() (ISQL, error) {
-	dsn := dbURLMySQL(DatabaseConfig)
-	db, err := sql.Open(DatabaseConfig.DBType, dsn)
+	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("error opening connection to database: %v", err)
+		log.Fatal("Error loading .env file")
 	}
 
-	return &MySQL{
-		Client: db,
-	}, nil
+	DatabaseConfig := &sample.DatabaseConfig{
+		Username:     os.Getenv("DB_USERNAME"),
+		Password:     os.Getenv("DB_PASSWORD"),
+		Host:         os.Getenv("DB_HOST"),
+		DatabaseName: os.Getenv("DB_NAME"),
+		SSL:          os.Getenv("DB_SSL"),
+		DBType:       os.Getenv("DB_TYPE"),
+	}
+
+    dsn := dbURLMySQL(DatabaseConfig)
+    db, err := sql.Open(DatabaseConfig.DBType, dsn)
+    if err != nil {
+        return nil, fmt.Errorf("error opening connection to database: %v", err)
+    }
+
+    return &MySQL{
+        Client: db,
+    }, nil
+}
+
+func TestConnection(t *testing.T) {
+	tClient,err := NewTestMySQL()
+	if err!= nil{
+		t.Errorf("Error connecting client, Expected No error, got: %v", err)
+	}
+	if tClient == nil {
+		t.Errorf("Expected a client, got nil")
+	}
+
 }
 
 func TestSchema(t *testing.T) {
@@ -79,22 +100,57 @@ func TestGetTables(t *testing.T) {
 }
 
 func TestNewClient(t *testing.T) {
-	m := &MySQL{}
+	os.Setenv("DB_TYPE", "mysql")
 
-	client, err := m.NewClient(DatabaseConfig, "mysql")
-	if err != nil {
-		t.Errorf("Error creating new client, Expected No error, got: %v", err)
+	DBConfig := &sample.DatabaseConfig{
+		Username:     os.Getenv("DB_USERNAME"),
+		Password:     os.Getenv("DB_PASSWORD"),
+		Host:         os.Getenv("DB_HOST"),
+		DatabaseName: os.Getenv("DB_NAME"),
+		SSL:          os.Getenv("DB_SSL"),
+		DBType:       os.Getenv("DB_TYPE"),
 	}
-	// _, ok := client.(ISQL)
-	// if !ok {
-	// 	t.Errorf("Expected a client implementing ISQL, got %T", client)
-	// }
 
-	client, err = m.NewClient(DatabaseConfig, "unsupported")
-	if err == nil {
-		t.Errorf("Expected an error, got nil")
-	}
-	if client != nil {
-		t.Errorf("Expected nil, got %v", client)
-	}
+    m := MySQL{}
+
+    testCases := []struct {
+        name        string
+        dbType      string
+        expectError bool
+    }{
+        {
+            name:        "Valid DB Type",
+            dbType:      DBConfig.DBType,
+            expectError: false,
+        },
+        {
+            name:        "Invalid DB Type",
+            dbType:      "unsupported",
+            expectError: true,
+        },
+    }
+
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+		client, err := m.NewClient(DBConfig ,tc.dbType)
+
+            if tc.expectError {
+                if err == nil {
+                    t.Errorf("Expected an error, got nil")
+                }
+                if client != nil {
+                    t.Errorf("Expected nil, got %v", client)
+                }
+            } else {
+                if err != nil {
+					t.Log(tc.dbType)
+                    t.Errorf("Error creating new client, Expected No error, got: %v", err)
+                }
+                _, ok := client.(ISQL)
+                if !ok {
+                	t.Errorf("Expected a client implementing ISQL, got %T", client)
+                }
+            }
+        })
+    }
 }
