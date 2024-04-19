@@ -14,3 +14,8 @@ go get github.com/snowflakedb/gosnowflake
 
 - `docker-compose up -d`
 - `docker exec -it 86c221092f15 mysql -uroot -p`
+
+### Running docker-compose to test postgresql
+
+- `docker-compose up postgres -d`
+- `docker exec -it <container id> psql -U postgres -d postgres`

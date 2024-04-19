@@ -10,7 +10,7 @@ import (
 
 func (p *Postgres) Schema(table string) ([]byte, error) {
 
-	statement, err := p.Client.Prepare("DESCRIBE " + table)
+	statement, err := p.Client.Prepare("SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;")
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -18,7 +18,7 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 	defer statement.Close()
 
 	// execute the sql statement
-	rows, err := statement.Query()
+	rows, err := statement.Query(table)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
@@ -116,7 +116,7 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 }
 
 func (p *Postgres) Tables(databaseName string) ([]byte, error) {
-	statememt, err := p.Client.Prepare("SELECT table_name FROM information_schema.tablesWHERE table_schema= $1 AND table_type='BASE TABLE';")
+	statememt, err := p.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';")
 	if err!= nil{
 		return nil,fmt.Errorf("error preparing sql statement: %v",err)
 	}

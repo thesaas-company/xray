@@ -7,46 +7,44 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/adarsh-jaiss/library/sample/sample"
 	"github.com/adarsh-jaiss/library/sample/types"
 	"github.com/joho/godotenv"
 )
 
-type TestMySql struct {
+type TestPostgres struct {
 	Client *sql.DB
 }
 
-func NewTestMySQL() (types.ISQL, error) {
+func NewTestPostgres() (types.ISQL, error) {
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	DatabaseConfig := &sample.DatabaseConfig{
-		Username:     os.Getenv("MYSQL_DB_USERNAME"),
-		Password:     os.Getenv("MYSQL_DB_PASSWORD"),
-		Host:         os.Getenv("MYSQL_DB_HOST"),
-		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
-		SSL:          os.Getenv("MYSQL_DB_SSL"),
-		DBType:       os.Getenv("MYSQL_DB_TYPE"),
-		Port:         os.Getenv("MYSQL_DB_PORT"),
+	dbConfig := &sample.DatabaseConfig{
+		Username:     os.Getenv("POSTGRES_DB_USERNAME"),
+		Password:     os.Getenv("POSTGRES_DB_PASSWORD"),
+		Host:         os.Getenv("POSTGRES_DB_HOST"),
+		DatabaseName: os.Getenv("POSTGRES_DB_NAME"),
+		SSL:          os.Getenv("POSTGRES_DB_SSLMODE"),
+		DBType:       os.Getenv("POSTGRES_DB_TYPE"),
+		Port:         os.Getenv("POSTGRES_DB_PORT"),
 	}
-
-	dsn := dbURLMySQL(DatabaseConfig)
-	db, err := sql.Open(DatabaseConfig.DBType, dsn)
+	
+	db,err := sql.Open("postgres", fmt.Sprintf( "user=%s password=%s dbname=%s sslmode=%s",dbConfig.Username,dbConfig.Password,dbConfig.DatabaseName,dbConfig.SSL))
 	if err != nil {
-		return nil, fmt.Errorf("error opening connection to database: %v", err)
+		return nil, fmt.Errorf("database connecetion failed : %v", err)
 	}
 
-	return &MySQL{
+	return &Postgres{
 		Client: db,
 	}, nil
 }
 
-func TestMySQLConnection(t *testing.T) {
-	tClient, err := NewTestMySQL()
+func TestPostgresConnection(t *testing.T) {
+	tClient, err := NewTestPostgres()
 	if err != nil {
 		t.Errorf("Error connecting client, Expected No error, got: %v", err)
 	}
@@ -56,29 +54,32 @@ func TestMySQLConnection(t *testing.T) {
 
 }
 
-func TestMysqlSchema(t *testing.T) {
-	tClient, err := NewTestMySQL()
+func TestPostgresSchema(t *testing.T) {
+	tClient, err := NewTestPostgres()
 	if err != nil {
-		t.Errorf("Error creating client, Expected No error, got: %v", err)
+		t.Errorf("Error connecting client, Expected No error, got: %v", err)
 	}
 
 	tableName := os.Getenv("POSTGRES_TABLE_NAME")
 	res, err := tClient.Schema(tableName)
 	if err != nil {
-		t.Errorf("Error getting schema, Expected No error, got: %v", err)
+		t.Errorf("Error retrieving schema, Expected No error, got: %v", err)
 	}
 
-	// fmt.Println(res)
+	if res == nil {
+		t.Errorf("Expected schema, got nil")
+	}
+
 	t.Logf("schema: %v", res)
 }
 
-func TestMysqlExecute(t *testing.T) {
-	tClient, err := NewTestMySQL()
+func TestPostgresExecute(t *testing.T) {
+	tClient, err := NewTestPostgres()
 	if err != nil {
-		t.Errorf("Error creating client, Expected No error, got: %v", err)
+		t.Errorf("Error connecting client, Expected No error, got: %v", err)
 	}
-
-	query := "SELECT * FROM $1"
+	table := "user"
+	query := "SELECT * FROM " + table
 	res, err := tClient.Execute(query)
 
 	if err != nil {
@@ -88,13 +89,16 @@ func TestMysqlExecute(t *testing.T) {
 	t.Logf("Execute result: %v", res)
 }
 
-func TestGetTables(t *testing.T) {
-	tClient, err := NewTestMySQL()
+func TestPostgresGetTables(t *testing.T) {
+
+	tClient, err := NewTestPostgres()
 	if err != nil {
 		t.Errorf("Error creating client, Expected No error, got: %v", err)
 
 	}
-	DBName := os.Getenv("MYSQL_DB_NAME")
+	DBName := os.Getenv("POSTGRES_DB_NAME")
+
+	
 	tables, err := tClient.Tables(DBName)
 	if err != nil {
 		t.Errorf("Error getting tables, Expected No error, got: %v", err)
@@ -103,19 +107,19 @@ func TestGetTables(t *testing.T) {
 	t.Logf("Tables List: %v", tables)
 }
 
-func TestNewClient(t *testing.T) {
-	os.Setenv("MYSQL_DB_TYPE", "mysql")
+func TestPostgresNewclient(t *testing.T) {
+	os.Setenv("POSTGRES_DB_TYPE", "postgres")
 
 	DBConfig := &sample.DatabaseConfig{
-		Username:     os.Getenv("MYSQL_DB_USERNAME"),
-		Password:     os.Getenv("MYSQL_DB_PASSWORD"),
-		Host:         os.Getenv("MYSQL_DB_HOST"),
-		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
-		SSL:          os.Getenv("MYSQL_DB_SSL"),
-		DBType:       os.Getenv("MYSQL_DB_TYPE"),
+		Username:     os.Getenv("POSTGRES_DB_USERNAME"),
+		Password:     os.Getenv("POSTGRES_DB_PASSWORD"),
+		Host:         os.Getenv("POSTGRES_DB_HOST"),
+		DatabaseName: os.Getenv("POSTGRES_DB_NAME"),
+		SSL:          os.Getenv("POSTGRES_DB_SSL"),
+		DBType:       os.Getenv("POSTGRES_DB_TYPE"),
 	}
 
-	m := MySQL{}
+	p := &Postgres{}
 
 	testCases := []struct {
 		name        string
@@ -136,7 +140,7 @@ func TestNewClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client, err := m.NewClient(DBConfig, tc.dbType)
+			client, err := p.NewClient(DBConfig, tc.dbType)
 
 			if tc.expectError {
 				if err == nil {
@@ -157,4 +161,5 @@ func TestNewClient(t *testing.T) {
 			}
 		})
 	}
+
 }
