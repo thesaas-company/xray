@@ -1,14 +1,13 @@
 package library
 
 import (
-
 	"encoding/json"
 	"fmt"
 
 	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/types"
 	_ "github.com/go-sql-driver/mysql"
 )
-
 
 // This method will accept a table name as input and return the table schema (structure).
 func (m *MySQL) Schema(table string) ([]byte, error) {
@@ -30,9 +29,9 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 	defer rows.Close()
 
 	// scanning the result into and append it into a varibale
-	var columns []ColumnContext
+	var columns []types.ColumnContext
 	for rows.Next() {
-		var column ColumnContext
+		var column types.ColumnContext
 		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
@@ -47,7 +46,7 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := TableContext{
+	tableContext := types.TableContext{
 		Name:        table,
 		Data:        columns,
 		ColumnCount: int64(len(columns)),
@@ -109,7 +108,7 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 	}
 
 	// Convert the result to JSON
-	queryResult := QueryResult{
+	queryResult := types.QueryResult{
 		Columns: columns,
 		Rows:    results,
 	}
@@ -161,7 +160,7 @@ func (m *MySQL) Tables(databaseName string) ([]byte, error) {
 }
 
 //  Generate an interface based on the specified database type.
-func(m *MySQL) NewClient(dbConfig *sample.DatabaseConfig, dbType string) (ISQL, error) {
+func(m *MySQL) NewClient(dbConfig *sample.DatabaseConfig, dbType string) (types.ISQL, error) {
 	switch dbType {
 	case "mysql":
 		return NewMySQL(dbConfig)

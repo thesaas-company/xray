@@ -2,27 +2,28 @@ package library
 
 import (
 	"database/sql"
-	"os"
-	"github.com/adarsh-jaiss/library/sample/sample"
 	"fmt"
+	"log"
+	"os"
+
+	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/types"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"log"
 )
 
 type MySQL struct {
 	Client *sql.DB
 }
 
-func NewMySQL(dbConfig *sample.DatabaseConfig) (ISQL, error) {
+func NewMySQL(dbConfig *sample.DatabaseConfig) (types.ISQL, error) {
 	err := godotenv.Load()
     if err != nil {
         log.Fatal("Error loading .env file")
     }
 
-
-	if os.Getenv("DB_PASSWORD") == "" || len(os.Getenv("DB_PASSWORD")) == 0 {
-		return nil, fmt.Errorf("please set DB_PASSWORD env variable for the database")
+	if os.Getenv("MYSQL_DB_PASSWORD") == "" || len(os.Getenv("MYSQL_DB_PASSWORD")) == 0 { // added mysql to be more verbose about the db type
+		return nil, fmt.Errorf("please set MYSQL_DB_PASSWORD env variable for the database")  
 	}
 	dsn := dbURLMySQL(dbConfig)
 	
@@ -35,7 +36,6 @@ func NewMySQL(dbConfig *sample.DatabaseConfig) (ISQL, error) {
 	},nil
 	
 }
-
 
 func dbURLMySQL(dbConfig *sample.DatabaseConfig) string {
 	return fmt.Sprintf(

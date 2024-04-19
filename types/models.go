@@ -1,4 +1,4 @@
-package library
+package types
 
 import (
 	"database/sql"

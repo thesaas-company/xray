@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"testing"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/types"
 	"github.com/joho/godotenv"
 )
 
@@ -16,19 +18,19 @@ type TestMySql struct {
 	Client *sql.DB
 }
 
-func NewTestMySQL() (ISQL, error) {
+func NewTestMySQL() (types.ISQL, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
 	DatabaseConfig := &sample.DatabaseConfig{
-		Username:     os.Getenv("DB_USERNAME"),
-		Password:     os.Getenv("DB_PASSWORD"),
-		Host:         os.Getenv("DB_HOST"),
-		DatabaseName: os.Getenv("DB_NAME"),
-		SSL:          os.Getenv("DB_SSL"),
-		DBType:       os.Getenv("DB_TYPE"),
+		Username:     os.Getenv("MYSQL_DB_USERNAME"),
+		Password:     os.Getenv("MYSQL_DB_PASSWORD"),
+		Host:         os.Getenv("MYSQL_DB_HOST"),
+		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
+		SSL:          os.Getenv("MYSQL_DB_SSL"),
+		DBType:       os.Getenv("MYSQL_DB_TYPE"),
 	}
 
     dsn := dbURLMySQL(DatabaseConfig)
@@ -103,12 +105,12 @@ func TestNewClient(t *testing.T) {
 	os.Setenv("DB_TYPE", "mysql")
 
 	DBConfig := &sample.DatabaseConfig{
-		Username:     os.Getenv("DB_USERNAME"),
-		Password:     os.Getenv("DB_PASSWORD"),
-		Host:         os.Getenv("DB_HOST"),
-		DatabaseName: os.Getenv("DB_NAME"),
-		SSL:          os.Getenv("DB_SSL"),
-		DBType:       os.Getenv("DB_TYPE"),
+		Username:     os.Getenv("MYSQL_DB_USERNAME"),
+		Password:     os.Getenv("MYSQL_DB_PASSWORD"),
+		Host:         os.Getenv("MYSQL_DB_HOST"),
+		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
+		SSL:          os.Getenv("MYSQL_DB_SSL"),
+		DBType:       os.Getenv("MYSQL_DB_TYPE"),
 	}
 
     m := MySQL{}
@@ -146,7 +148,7 @@ func TestNewClient(t *testing.T) {
 					t.Log(tc.dbType)
                     t.Errorf("Error creating new client, Expected No error, got: %v", err)
                 }
-                _, ok := client.(ISQL)
+                _, ok := client.(types.ISQL)
                 if !ok {
                 	t.Errorf("Expected a client implementing ISQL, got %T", client)
                 }
