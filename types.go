@@ -8,27 +8,31 @@ import (
 
 type Table struct {
 	Name        string          `json:"name"`
-	Data        []Column `json:"data"`
+	Columns        []Column `json:"columns"`
 	ColumnCount int64           `json:"column_count"`
 	Description string          `json:"description"`
-	Metatags    string          `json:"metatags"`
+	Metatags    []string          `json:"metatags"` // Add all Column name in metatags
 }
 
 type Column struct {
-    ColumnName   string        `json:"column_name"`
-    DataType     string        `json:"data_type"`
+    Name   string        `json:"name"`
+    Type     string        `json:"type"`
     IsNullable   string        `json:"is_nullable"`
-    ColumnKey    string        `json:"column_key"`
+    Key    string        `json:"key"`
     DefaultValue sql.NullString `json:"default_value"`
-    Extra        string        `json:"extra"`
-    Description  string        `json:"description"`
-    Metatags     string        `json:"metatags"`
+    Extra        string        `json:"extra"` // Add more description about the field extra
+    Description  string        `json:"description"` 
+    Metatags     []string        `json:"metatags"` // Add Column name in metatags, ["name", "isIndex", "IsPrimary", "IsForeignKey"]
     Visibility   bool          `json:"visibility"`
+	// TODO: Add more datapoints like (Not P0)
+	// isIndex, IsPrimary, Foreign Key,  
 }
 
 type QueryResult struct {
 	Columns []string        `json:"columns"`
 	Rows    [][]interface{} `json:"rows"`
+	Time int64 `json:"time"`
+	Error string `json:"error"`
 }
 
 type DbType int
