@@ -40,6 +40,8 @@ func main() {
 }
 ```
 
+## Testing
+
 ### Running docker-compose to test mysql
 
 - `docker-compose up -d`

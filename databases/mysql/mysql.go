@@ -6,7 +6,7 @@ import (
 
 	"github.com/adarsh-jaiss/library/sample/types"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/config"
 	"github.com/joho/godotenv"
 )
 
@@ -14,7 +14,15 @@ type MySQL struct {
 	Client *sql.DB
 }
 
-func NewMySQL(dbConfig *sample.DatabaseConfig) (ISQL, error) {
+func NewMySQL(dbClient *sql.DB) (ISQL, error) {
+	return &MySQL{
+		Client: dbClient,
+	}, nil
+
+}
+
+
+func NewMySQLWithConfig(dbConfig *config.Config) (ISQL, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")

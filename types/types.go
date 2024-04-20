@@ -1,9 +1,7 @@
-package library
+package types
 
 import (
 	"database/sql"
-
-	"github.com/adarsh-jaiss/library/sample/sample"
 )
 
 type Table struct {
@@ -22,7 +20,7 @@ type Column struct {
     DefaultValue sql.NullString `json:"default_value"`
     Extra        string        `json:"extra"` // Add more description about the field extra
     Description  string        `json:"description"` 
-    Metatags     []string        `json:"metatags"` // Add Column name in metatags, ["name", "isIndex", "IsPrimary", "IsForeignKey"]
+    Metatags     []string        `json:"metatags"` // Add Column name in metatags, ["name"]
     Visibility   bool          `json:"visibility"`
 	// TODO: Add more datapoints like (Not P0)
 	// isIndex, IsPrimary, Foreign Key,  

@@ -4,15 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adarsh-jaiss/library/sample/sample"
-	"github.com/adarsh-jaiss/library/sample/types"
+	"github.com/adarsh-jaiss/library/config"
 )
 
 type Postgres struct {
 	Client *sql.DB
 }
 
-func NewPostgres(dbConfig *sample.DatabaseConfig) (types.ISQL, error) {
+func NewMySQL(dbClient *sql.DB) (ISQL, error) {
+	return &MySQL{
+		Client: dbClient,
+	}, nil
+
+}
+
+func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	db, err := sql.Open(dbConfig.DBType, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, dbConfig.Password, dbConfig.DatabaseName, dbConfig.SSL))
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
