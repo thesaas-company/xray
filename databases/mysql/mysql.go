@@ -10,6 +10,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const (
+	DB_PASSWORD = "DB_PASSWORD"
+	SCHEMA_QUERY = "DESCRIBE "
+	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?"
+)
+
 type MySQL struct {
 	Client *sql.DB
 }
@@ -23,13 +29,8 @@ func NewMySQL(dbClient *sql.DB) (ISQL, error) {
 
 
 func NewMySQLWithConfig(dbConfig *config.Config) (ISQL, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	if os.Getenv("MYSQL_DB_PASSWORD") == "" || len(os.Getenv("MYSQL_DB_PASSWORD")) == 0 { // added mysql to be more verbose about the db type
-		return nil, fmt.Errorf("please set MYSQL_DB_PASSWORD env variable for the database")
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
+		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 	dsn := dbURLMySQL(dbConfig)
 
@@ -49,7 +50,7 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 	// prepare the sql statement
 	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
 	// TODO: Extract More datapoint if possible
-	statement, err := m.Client.Prepare("DESCRIBE " + table)
+	statement, err := m.Client.Prepare(SCHEMA_QUERY + table)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -65,9 +66,9 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 	defer rows.Close()
 
 	// scanning the result into and append it into a varibale
-	var columns []types.ColumnContext
+	var columns []types.Column
 	for rows.Next() {
-		var column types.ColumnContext
+		var column types.Column
 		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
@@ -82,7 +83,7 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := types.TableContext{
+	tableContext := types.Table{
 		Name:        table,
 		Data:        columns,
 		ColumnCount: int64(len(columns)),
@@ -159,7 +160,7 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 
 // Retrieve the names of tables in the specified database.
 func (m *MySQL) Tables(databaseName string) ([]byte, error) {
-	statememt, err := m.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema = ?")
+	statememt, err := m.Client.Prepare(MYSQL_TABLES_LIST_QUERY)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}

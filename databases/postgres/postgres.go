@@ -7,6 +7,11 @@ import (
 	"github.com/adarsh-jaiss/library/config"
 )
 
+const (
+	DB_PASSWORD = "DB_PASSWORD"
+	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
+	POSTGRES_TABLE_LIST_QUERY= "SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';"
+)
 type Postgres struct {
 	Client *sql.DB
 }
@@ -19,6 +24,10 @@ func NewMySQL(dbClient *sql.DB) (ISQL, error) {
 }
 
 func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
+	// TODO: Add check for env variable DB_PASSWORD, same as mysql
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
+		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
+	}
 	db, err := sql.Open(dbConfig.DBType, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, dbConfig.Password, dbConfig.DatabaseName, dbConfig.SSL))
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
@@ -32,7 +41,7 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 
 func (p *Postgres) Schema(table string) ([]byte, error) {
 	// TODO: Extract More datapoint if possible
-	statement, err := p.Client.Prepare("SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;")
+	statement, err := p.Client.Prepare(POSTGRES_SCHEMA_QUERY)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -138,7 +147,7 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 }
 
 func (p *Postgres) Tables(databaseName string) ([]byte, error) {
-	statememt, err := p.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';")
+	statememt, err := p.Client.Prepare(POSTGRES_TABLE_LIST_QUERY)
 	if err!= nil{
 		return nil,fmt.Errorf("error preparing sql statement: %v",err)
 	}
