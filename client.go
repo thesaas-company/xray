@@ -42,10 +42,11 @@ type Config struct {
 }
 
 //TODO: Add description
+// Please fix the interface changes
 type ISQL interface {
-	Schema(string) ([]byte, error)
+	Schema(string) (Table, error)
 	Execute(string) ([]byte, error)
-	Tables(string) ([]byte, error)
+	Tables(string) ([]string, error)
 }
 
 //TODO: Add description
