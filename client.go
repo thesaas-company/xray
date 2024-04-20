@@ -8,21 +8,6 @@ import (
 	"fmt"
 )
 
-type DbType int
-
-const (
-	MySQL    DbType = iota + 1 
-	Postgres  
-)
-
-func (w DbType) String() string {
-	return [...]string{"mysql", "postgres"}[w-1]
-}
-
-func (w DbType) EnumIndex() int {
-	return int(w)
-}
-
 
 //TODO: Add code docs
 type Config struct {
