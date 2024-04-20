@@ -1,43 +1,40 @@
 package library
 
 import (
-	"github.com/adarsh-jaiss/library/databases/mysql"
-	"github.com/adarsh-jaiss/library/databases/postgres"
+	"database/sql"
 	"fmt"
+
+	"github.com/adarsh-jaiss/library/sample/config"
+	"github.com/adarsh-jaiss/library/sample/databases/mysql"
+	"github.com/adarsh-jaiss/library/sample/databases/postgres"
+	"github.com/adarsh-jaiss/library/sample/types"
 )
 
-
 //TODO: Add description
-// Please fix the interface changes
-type ISQL interface {
-	Schema(string) (Table, error)
-	Execute(string) ([]byte, error)
-	Tables(string) ([]string, error)
-}
 
-//TODO: Add description
-func NewClientWithConfig(dbConfig *config.Config, dbType DbType) (ISQL, error)  {
-		switch dbType {
-		case MySQL:
-			return mysql.NewMySQLWithConfig(dbConfig)
-		case Postgres:
-			return postgres.NewPostgresWithConfig(dbConfig)
-		// case "snowflake":
-		// 	return &SnowFlake{},nil
-		// case "bigquery":
-		// 	return &Bigquery{},nil
-		// case "redshift":
-		// 	return &RedShift{},nil
-		default:
-			return nil, fmt.Errorf("unsupported database type: %s", dbType)
-	 }
-}
-
-func NewClient(dbClient *sql.DB, dbType DbType) (ISQL, error)  {
+// TODO: Add description
+func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.ISQL, error) {
 	switch dbType {
-	case MySQL:
+	case types.MySQL:
+		return mysql.NewMySQLWithConfig(dbConfig)
+	case types.Postgres:
+		return postgres.NewPostgresWithConfig(dbConfig)
+	// case "snowflake":
+	// 	return &SnowFlake{},nil
+	// case "bigquery":
+	// 	return &Bigquery{},nil
+	// case "redshift":
+	// 	return &RedShift{},nil
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+	}
+}
+
+func NewClient(dbClient *sql.DB, dbType types.DbType) (types.ISQL, error) {
+	switch dbType {
+	case types.MySQL:
 		return mysql.NewMySQL(dbClient)
-	case Postgres:
+	case types.Postgres:
 		return postgres.NewPostgres(dbClient)
 	// case "snowflake":
 	// 	return &SnowFlake{},nil
@@ -47,5 +44,5 @@ func NewClient(dbClient *sql.DB, dbType DbType) (ISQL, error)  {
 	// 	return &RedShift{},nil
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
- }
+	}
 }

@@ -1,13 +1,15 @@
 package mysql
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 
+	"github.com/adarsh-jaiss/library/sample/config"
 	"github.com/adarsh-jaiss/library/sample/types"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/adarsh-jaiss/library/config"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 )
 
 const (
@@ -20,7 +22,7 @@ type MySQL struct {
 	Client *sql.DB
 }
 
-func NewMySQL(dbClient *sql.DB) (ISQL, error) {
+func NewMySQL(dbClient *sql.DB) (types.ISQL, error) {
 	return &MySQL{
 		Client: dbClient,
 	}, nil
@@ -28,13 +30,15 @@ func NewMySQL(dbClient *sql.DB) (ISQL, error) {
 }
 
 
-func NewMySQLWithConfig(dbConfig *config.Config) (ISQL, error) {
+func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 	dsn := dbURLMySQL(dbConfig)
 
-	db, err := sql.Open(dbConfig.DBType, dsn)
+	
+	dbtype := types.MySQL
+	db, err := sql.Open(dbtype.String(), dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error opening connection to database: %v", err)
 	}
@@ -69,11 +73,11 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""  // default description
-		column.Metatags = ""     // default metatags
+		column.Metatags = []string{}     // default metatags as an empty string slice
 		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
@@ -85,11 +89,10 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 
 	tableContext := types.Table{
 		Name:        table,
-		Data:        columns,
+		Columns:     columns,
 		ColumnCount: int64(len(columns)),
 		Description: "", 
-		Metatags:    "", 
-		
+		Metatags:    []string{}, 		
 	}
 
 	// convert the table context to json
@@ -198,11 +201,11 @@ func (m *MySQL) Tables(databaseName string) ([]byte, error) {
 }
 
 
-func dbURLMySQL(dbConfig *sample.DatabaseConfig) string {
+func dbURLMySQL(dbConfig *config.Config) string {
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",
 		dbConfig.Username,
-		dbConfig.Password,
+		DB_PASSWORD,
 		dbConfig.Host,
 		dbConfig.DatabaseName,
 		dbConfig.SSL,

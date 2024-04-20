@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"database/sql"
@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/config"
 	"github.com/adarsh-jaiss/library/sample/types"
 	"github.com/joho/godotenv"
 )
@@ -19,24 +19,26 @@ type TestMySql struct {
 	Client *sql.DB
 }
 
+const (
+	DBType = "mysql"
+)
+
 func NewTestMySQL() (types.ISQL, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	DatabaseConfig := &sample.DatabaseConfig{
+	DatabaseConfig := &config.Config{
 		Username:     os.Getenv("MYSQL_DB_USERNAME"),
-		Password:     os.Getenv("MYSQL_DB_PASSWORD"),
 		Host:         os.Getenv("MYSQL_DB_HOST"),
 		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
 		SSL:          os.Getenv("MYSQL_DB_SSL"),
-		DBType:       os.Getenv("MYSQL_DB_TYPE"),
 		Port:         os.Getenv("MYSQL_DB_PORT"),
 	}
 
 	dsn := dbURLMySQL(DatabaseConfig)
-	db, err := sql.Open(DatabaseConfig.DBType, dsn)
+	db, err := sql.Open(DBType, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error opening connection to database: %v", err)
 	}
@@ -107,16 +109,12 @@ func TestGetTables(t *testing.T) {
 func TestNewClient(t *testing.T) {
 	os.Setenv("MYSQL_DB_TYPE", "mysql")
 
-	DBConfig := &sample.DatabaseConfig{
+	DBConfig := &config.Config{
 		Username:     os.Getenv("MYSQL_DB_USERNAME"),
-		Password:     os.Getenv("MYSQL_DB_PASSWORD"),
 		Host:         os.Getenv("MYSQL_DB_HOST"),
 		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
 		SSL:          os.Getenv("MYSQL_DB_SSL"),
-		DBType:       os.Getenv("MYSQL_DB_TYPE"),
 	}
-
-	m := MySQL{}
 
 	testCases := []struct {
 		name        string
@@ -125,7 +123,7 @@ func TestNewClient(t *testing.T) {
 	}{
 		{
 			name:        "Valid DB Type",
-			dbType:      DBConfig.DBType,
+			dbType:      DBType,
 			expectError: false,
 		},
 		{
@@ -137,7 +135,7 @@ func TestNewClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client, err := m.NewClient(DBConfig, tc.dbType)
+			client, err := NewMySQLWithConfig(DBConfig)
 
 			if tc.expectError {
 				if err == nil {

@@ -1,10 +1,13 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/adarsh-jaiss/library/config"
+	"github.com/adarsh-jaiss/library/sample/config"
+	"github.com/adarsh-jaiss/library/sample/types"
 )
 
 const (
@@ -16,8 +19,8 @@ type Postgres struct {
 	Client *sql.DB
 }
 
-func NewMySQL(dbClient *sql.DB) (ISQL, error) {
-	return &MySQL{
+func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
+	return &Postgres{
 		Client: dbClient,
 	}, nil
 
@@ -28,14 +31,15 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
-	db, err := sql.Open(dbConfig.DBType, fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, dbConfig.Password, dbConfig.DatabaseName, dbConfig.SSL))
+
+	dbtype := types.Postgres
+	db, err := sql.Open(dbtype.String(), fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, DB_PASSWORD, dbConfig.DatabaseName, dbConfig.SSL))
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
 	}
 	return &Postgres{
 		Client: db,
 	}, nil
-
 }
 
 
@@ -57,14 +61,14 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 	defer rows.Close()
 
 	// scanning the result into and append it into a varibale
-	var columns []types.ColumnContext
+	var columns []types.Column
 	for rows.Next() {
-		var column types.ColumnContext
-		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
+		var column types.Column
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""  // default description 
-		column.Metatags = ""     // default metatags
+		column.Metatags = []string{}     // default metatags as an empty slice
 		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
@@ -76,10 +80,10 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 
 	tableContext := types.Table{
 		Name:        table,
-		Data:        columns,
+		Columns:        columns,
 		ColumnCount: int64(len(columns)),
 		Description: "",
-		Metatags:    "",
+		Metatags:    []string{},
 	}
 
 	// convert the table context to json
