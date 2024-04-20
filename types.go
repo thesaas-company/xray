@@ -1,4 +1,4 @@
-package types
+package library
 
 import (
 	"database/sql"
@@ -6,15 +6,15 @@ import (
 	"github.com/adarsh-jaiss/library/sample/sample"
 )
 
-type TableContext struct {
+type Table struct {
 	Name        string          `json:"name"`
-	Data        []ColumnContext `json:"data"`
+	Data        []Column `json:"data"`
 	ColumnCount int64           `json:"column_count"`
 	Description string          `json:"description"`
 	Metatags    string          `json:"metatags"`
 }
 
-type ColumnContext struct {
+type Column struct {
     ColumnName   string        `json:"column_name"`
     DataType     string        `json:"data_type"`
     IsNullable   string        `json:"is_nullable"`
@@ -31,17 +31,4 @@ type QueryResult struct {
 	Rows    [][]interface{} `json:"rows"`
 }
 
-// type ISQL interface {
-// 	Schema(table string) ([]byte, error)
-// 	Execute(query string) ([]byte, error)
-// 	Tables(databaseName string) ([]byte, error)
-// 	NewClient(dbType string) (ISQL, error)
-// }
-
-type ISQL interface {
-	Schema(string) ([]byte, error)
-	Execute(string) ([]byte, error)
-	Tables(string) ([]byte, error)
-	NewClient(*sample.DatabaseConfig ,string) (ISQL, error)
-}
 

@@ -1,4 +1,4 @@
-package library
+package postgres
 
 import (
 	"database/sql"
@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// TODO: currently you are doing ent2end testing with real database, It is possible to mock the  database client, Not a P0 but unit test should use a mock database client
 type TestMySql struct {
 	Client *sql.DB
 }

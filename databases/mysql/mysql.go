@@ -1,16 +1,47 @@
-package library
+package mysql
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adarsh-jaiss/library/sample/sample"
 	"github.com/adarsh-jaiss/library/sample/types"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/joho/godotenv"
 )
 
-func (p *Postgres) Schema(table string) ([]byte, error) {
+type MySQL struct {
+	Client *sql.DB
+}
 
-	statement, err := p.Client.Prepare("SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;")
+func NewMySQL(dbConfig *sample.DatabaseConfig) (ISQL, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	if os.Getenv("MYSQL_DB_PASSWORD") == "" || len(os.Getenv("MYSQL_DB_PASSWORD")) == 0 { // added mysql to be more verbose about the db type
+		return nil, fmt.Errorf("please set MYSQL_DB_PASSWORD env variable for the database")
+	}
+	dsn := dbURLMySQL(dbConfig)
+
+	db, err := sql.Open(dbConfig.DBType, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("error opening connection to database: %v", err)
+	}
+
+	return &MySQL{
+		Client: db,
+	}, nil
+
+}
+
+// This method will accept a table name as input and return the table schema (structure).
+func (m *MySQL) Schema(table string) ([]byte, error) {
+	// prepare the sql statement
+	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
+	// TODO: Extract More datapoint if possible
+	statement, err := m.Client.Prepare("DESCRIBE " + table)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -18,7 +49,7 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 	defer statement.Close()
 
 	// execute the sql statement
-	rows, err := statement.Query(table)
+	rows, err := statement.Query()
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
@@ -47,8 +78,9 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 		Name:        table,
 		Data:        columns,
 		ColumnCount: int64(len(columns)),
-		Description: "",
-		Metatags:    "",
+		Description: "", 
+		Metatags:    "", 
+		
 	}
 
 	// convert the table context to json
@@ -60,9 +92,10 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 	return jsonData, nil
 }
 
-func (p *Postgres) Execute(query string) ([]byte, error) {
+// Execute a database query and return the result in JSON format
+func (m *MySQL) Execute(query string) ([]byte, error) {
 	// prepare the sql statement
-	statement, err := p.Client.Prepare(query)
+	statement, err := m.Client.Prepare(query)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -115,46 +148,58 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
-func (p *Postgres) Tables(databaseName string) ([]byte, error) {
-	statememt, err := p.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';")
-	if err!= nil{
-		return nil,fmt.Errorf("error preparing sql statement: %v",err)
+// Retrieve the names of tables in the specified database.
+func (m *MySQL) Tables(databaseName string) ([]byte, error) {
+	statememt, err := m.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema = ?")
+	if err != nil {
+		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
 	defer statememt.Close()
 
+	// execute the sql statement
 	rows,err := statememt.Query(databaseName)
-	if err!=nil{
-		return nil, fmt.Errorf("error executing sql statement: %v",err)
+	if err!= nil{
+		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
 	defer rows.Close()
 
+	//scan and append the result
 	var tables []string
 	for rows.Next(){
 		var table string
 		if err := rows.Scan(&table); err!= nil{
-			return nil, fmt.Errorf("error scanning database")
+			return nil, fmt.Errorf("error scanning database: %v",err)
 		}
 		tables = append(tables, table)
 	}
 
-	if err := rows.Err(); err!=nil{
-		return nil, fmt.Errorf("error interating over rows: %v",err)
+	// checking for errors in iterating over rows
+	if err := rows.Err(); err!= nil{
+		return nil, fmt.Errorf("error iterating over rows:%v",err)
 	}
 
+	// convert the result to json
 	jsonData,err := json.Marshal(tables)
-	if err != nil{
-		return nil, fmt.Errorf("error marshalling json: %v",err)
+	if err!= nil{
+		return nil,fmt.Errorf("error marshalling json: %v",err)
 	}
 
-	return jsonData,nil
-
+	return jsonData, nil
 }
 
-func(p *Postgres) NewClient(dbConfig *sample.DatabaseConfig, dbType string) (types.ISQL, error) {
-	switch dbType {
-	case "postgres":
-		return NewPostgres(dbConfig)
-	default:
-			return nil, fmt.Errorf("unsupported database type: %s", dbType)
-	}
+
+func dbURLMySQL(dbConfig *sample.DatabaseConfig) string {
+	return fmt.Sprintf(
+		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",
+		dbConfig.Username,
+		dbConfig.Password,
+		dbConfig.Host,
+		dbConfig.DatabaseName,
+		dbConfig.SSL,
+	)
 }
+
+	
+
+
+
