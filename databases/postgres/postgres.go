@@ -17,7 +17,6 @@ func NewPostgres(dbConfig *sample.DatabaseConfig) (types.ISQL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
 	}
-
 	return &Postgres{
 		Client: db,
 	}, nil
@@ -26,7 +25,6 @@ func NewPostgres(dbConfig *sample.DatabaseConfig) (types.ISQL, error) {
 
 
 func (p *Postgres) Schema(table string) ([]byte, error) {
-
 	// TODO: Extract More datapoint if possible
 	statement, err := p.Client.Prepare("SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;")
 	if err != nil {
@@ -50,7 +48,7 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
-		column.Description = ""  // default description
+		column.Description = ""  // default description 
 		column.Metatags = ""     // default metatags
 		column.Visibility = true // default visibility
 		columns = append(columns, column)
@@ -61,7 +59,7 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := types.TableContext{
+	tableContext := types.Table{
 		Name:        table,
 		Data:        columns,
 		ColumnCount: int64(len(columns)),

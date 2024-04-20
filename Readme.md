@@ -12,6 +12,10 @@ go get github.com/snowflakedb/gosnowflake
 
 ## Getting Started 
 
+TDOD: 
+- Please rename the project, You can choose any name that you like
+- Below is a example for users 
+
 ```go
 package main 
 
@@ -24,16 +28,15 @@ func main() {
         // document your config here 
     }
     client := library.NewClient(config, library.MySql)
-
-    b, err := client.Tables(config.DatabaseName)
-    // Handle error
-    // convert byte into []string
-    // run a loop over the list of table name 
+    data, err := client.Tables(config.DatabaseName)
+    // Handle error 
+    var response = []library.Table
     for _,v := range data {
-        by, err := library.Schema(v)
+        table, err := library.Schema(v)
         // Handle error
-        // convert 
+        response = response.append(table)
     }
+    fmt.Println(response)
 }
 ```
 

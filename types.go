@@ -31,7 +31,6 @@ type QueryResult struct {
 	Rows    [][]interface{} `json:"rows"`
 }
 
-
 type DbType int
 
 const (
@@ -43,6 +42,6 @@ func (w DbType) String() string {
 	return [...]string{"mysql", "postgres"}[w-1]
 }
 
-func (w DbType) EnumIndex() int {
+func (w DbType) Index() int {
 	return int(w)
 }

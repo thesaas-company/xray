@@ -1,15 +1,15 @@
 package library
 
 import (
-	"github.com/adarsh-jaiss/library/sample/sample"
-	"github.com/adarsh-jaiss/library/sample/types"
 	"github.com/adarsh-jaiss/library/databases/mysql"
 	"github.com/adarsh-jaiss/library/databases/postgres"
 	"fmt"
 )
 
 
+// Add Logging, You can use any lib
 //TODO: Add code docs
+// Once we are done with mysql and postgres, Let's rethink about the config structure
 type Config struct {
 	Host         string `yaml:"host" pflag:",Database host url"`
 	Username     string `yaml:"username" pflag:",Database username"`
