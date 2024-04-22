@@ -1,4 +1,4 @@
-// This is unit testing using a mock DB
+// This is unit testing of mysql methods using a mock DB
 package mysql
 
 import (
@@ -16,7 +16,7 @@ import (
 func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		fmt.Println("An error occurred while creating a new mock database connection")
+		panic("An error occurred while creating a new mock database connection")
 	}
 
 	return db, mock
