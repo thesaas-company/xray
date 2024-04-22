@@ -1,7 +1,10 @@
+// This is End to End Testing using real database connection.
+
 package mysql
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -26,7 +29,7 @@ const (
 func NewTestMySQL() (types.ISQL, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file", err)
 	}
 
 	DatabaseConfig := &config.Config{
@@ -71,8 +74,14 @@ func TestMysqlSchema(t *testing.T) {
 		t.Errorf("Error getting schema, Expected No error, got: %v", err)
 	}
 
+	var jsonRes types.Table
+	err = json.Unmarshal(res, &jsonRes)
+	if err != nil {
+		t.Errorf("Error unmarshalling schema, Expected No error, got: %v", err)
+	}
+
 	// fmt.Println(res)
-	t.Logf("schema: %v", res)
+	t.Logf("schema: %v", jsonRes)
 }
 
 func TestMysqlExecute(t *testing.T) {

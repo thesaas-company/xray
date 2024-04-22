@@ -39,6 +39,7 @@ func (l *LogMiddleware) Schema(table string) ([]byte, error) {
 }
 
 func (l *LogMiddleware) Execute(query string) ([]byte, error) {
+	
 	defer func(start time.Time) {
 		// Log the execution time
 		logrus.WithFields(logrus.Fields{
