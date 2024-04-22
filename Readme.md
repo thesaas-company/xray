@@ -7,8 +7,42 @@ go get google.golang.org/api/option
 go get github.com/go-sql-driver/mysql
 go get github.com/lib/pq
 go get github.com/snowflakedb/gosnowflake
+go get github.com/sirupsen/logrus
+go get github.com/DATA-DOG/go-sqlmock
 ```
 
+
+## Getting Started 
+
+TDOD: 
+- Please rename the project, You can choose any name that you like
+- Below is a example for users 
+
+```go
+package main 
+
+import (
+    "github.com/adarsh-jaiss/library"
+)
+
+func main() {
+    config := library.Config{
+        // document your config here 
+    }
+    client := library.NewClient(config, library.MySql)
+    data, err := client.Tables(config.DatabaseName)
+    // Handle error 
+    var response = []library.Table
+    for _,v := range data {
+        table, err := library.Schema(v)
+        // Handle error
+        response = response.append(table)
+    }
+    fmt.Println(response)
+}
+```
+
+## Testing
 
 ### Running docker-compose to test mysql
 

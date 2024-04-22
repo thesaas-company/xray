@@ -1,16 +1,56 @@
-package library
+package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/config"
 	"github.com/adarsh-jaiss/library/sample/types"
 )
 
-func (p *Postgres) Schema(table string) ([]byte, error) {
+var DB_PASSWORD = "DB_PASSWORD"
 
-	statement, err := p.Client.Prepare("SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;")
+const (
+	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
+	POSTGRES_TABLE_LIST_QUERY= "SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';"
+)
+type Postgres struct {
+	Client *sql.DB
+}
+
+func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
+	return &Postgres{
+		Client: dbClient,
+	}, nil
+
+}
+
+func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
+	// TODO: Add check for env variable DB_PASSWORD, same as mysql  --> done!
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
+		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
+	}
+	if os.Getenv(DB_PASSWORD) != "" || len(os.Getenv(DB_PASSWORD)) != 0 {
+		DB_PASSWORD = os.Getenv(DB_PASSWORD)
+	}
+	
+	
+	dbtype := types.Postgres
+	db, err := sql.Open(dbtype.String(), fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, DB_PASSWORD, dbConfig.DatabaseName, dbConfig.SSL))
+	if err != nil {
+		return nil, fmt.Errorf("database connecetion failed : %v", err)
+	}
+	return &Postgres{
+		Client: db,
+	}, nil
+}
+
+
+func (p *Postgres) Schema(table string) ([]byte, error) {
+	// TODO: Extract More datapoint if possible
+	statement, err := p.Client.Prepare(POSTGRES_SCHEMA_QUERY)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -26,14 +66,14 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 	defer rows.Close()
 
 	// scanning the result into and append it into a varibale
-	var columns []types.ColumnContext
+	var columns []types.Column
 	for rows.Next() {
-		var column types.ColumnContext
-		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
+		var column types.Column
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
-		column.Description = ""  // default description
-		column.Metatags = ""     // default metatags
+		column.Description = ""  // default description 
+		column.Metatags = []string{}     // default metatags as an empty slice
 		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
@@ -43,12 +83,12 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := types.TableContext{
+	tableContext := types.Table{
 		Name:        table,
-		Data:        columns,
+		Columns:        columns,
 		ColumnCount: int64(len(columns)),
 		Description: "",
-		Metatags:    "",
+		Metatags:    []string{},
 	}
 
 	// convert the table context to json
@@ -116,7 +156,7 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 }
 
 func (p *Postgres) Tables(databaseName string) ([]byte, error) {
-	statememt, err := p.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';")
+	statememt, err := p.Client.Prepare(POSTGRES_TABLE_LIST_QUERY)
 	if err!= nil{
 		return nil,fmt.Errorf("error preparing sql statement: %v",err)
 	}
@@ -150,11 +190,3 @@ func (p *Postgres) Tables(databaseName string) ([]byte, error) {
 
 }
 
-func(p *Postgres) NewClient(dbConfig *sample.DatabaseConfig, dbType string) (types.ISQL, error) {
-	switch dbType {
-	case "postgres":
-		return NewPostgres(dbConfig)
-	default:
-			return nil, fmt.Errorf("unsupported database type: %s", dbType)
-	}
-}

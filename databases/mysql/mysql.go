@@ -1,19 +1,65 @@
-package library
+package mysql
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/config"
 	"github.com/adarsh-jaiss/library/sample/types"
 	_ "github.com/go-sql-driver/mysql"
+	// "github.com/joho/godotenv"
 )
+
+var DB_PASSWORD = "DB_PASSWORD"
+
+const (
+	
+	SCHEMA_QUERY = "DESCRIBE "
+	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?"
+)
+
+type MySQL struct {
+	Client *sql.DB
+}
+
+func NewMySQL(dbClient *sql.DB) (types.ISQL, error) {
+	return &MySQL{
+		Client: dbClient,
+	}, nil
+
+}
+
+func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
+		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
+	}
+
+	if os.Getenv(DB_PASSWORD) != "" || len(os.Getenv(DB_PASSWORD)) != 0 {
+		DB_PASSWORD = os.Getenv(DB_PASSWORD)
+	}
+	
+	dsn := dbURLMySQL(dbConfig)
+
+	dbtype := types.MySQL
+	db, err := sql.Open(dbtype.String(), dsn)
+	if err != nil {
+		return nil, fmt.Errorf("error opening connection to database: %v", err)
+	}
+
+	return &MySQL{
+		Client: db,
+	}, nil
+
+}
 
 // This method will accept a table name as input and return the table schema (structure).
 func (m *MySQL) Schema(table string) ([]byte, error) {
 	// prepare the sql statement
 	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
-	statement, err := m.Client.Prepare("DESCRIBE " + table)
+	// TODO: Extract More datapoint if possible
+	statement, err := m.Client.Prepare(SCHEMA_QUERY + table)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -29,14 +75,14 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 	defer rows.Close()
 
 	// scanning the result into and append it into a varibale
-	var columns []types.ColumnContext
+	var columns []types.Column
 	for rows.Next() {
-		var column types.ColumnContext
-		if err := rows.Scan(&column.ColumnName, &column.DataType, &column.IsNullable, &column.ColumnKey, &column.DefaultValue, &column.Extra); err != nil {
+		var column types.Column
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""  // default description
-		column.Metatags = ""     // default metatags
+		column.Metatags = []string{}     // default metatags as an empty string slice
 		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
@@ -46,13 +92,12 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := types.TableContext{
+	tableContext := types.Table{
 		Name:        table,
-		Data:        columns,
+		Columns:     columns,
 		ColumnCount: int64(len(columns)),
 		Description: "", 
-		Metatags:    "", 
-		
+		Metatags:    []string{}, 		
 	}
 
 	// convert the table context to json
@@ -66,6 +111,7 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 
 // Execute a database query and return the result in JSON format
 func (m *MySQL) Execute(query string) ([]byte, error) {
+	// TODO: I need a way to extract more information like execution time(ms) by the query
 	// prepare the sql statement
 	statement, err := m.Client.Prepare(query)
 	if err != nil {
@@ -122,7 +168,7 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 
 // Retrieve the names of tables in the specified database.
 func (m *MySQL) Tables(databaseName string) ([]byte, error) {
-	statememt, err := m.Client.Prepare("SELECT table_name FROM information_schema.tables WHERE table_schema = ?")
+	statememt, err := m.Client.Prepare(MYSQL_TABLES_LIST_QUERY)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
 	}
@@ -159,16 +205,17 @@ func (m *MySQL) Tables(databaseName string) ([]byte, error) {
 	return jsonData, nil
 }
 
-//  Generate an interface based on the specified database type.
-func(m *MySQL) NewClient(dbConfig *sample.DatabaseConfig, dbType string) (types.ISQL, error) {
-	switch dbType {
-	case "mysql":
-		return NewMySQL(dbConfig)
-	default:
-			return nil, fmt.Errorf("unsupported database type: %s", dbType)
-	}
-}
 
+func dbURLMySQL(dbConfig *config.Config) string {
+	return fmt.Sprintf(
+		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",
+		dbConfig.Username,
+		DB_PASSWORD,
+		dbConfig.Host,
+		dbConfig.DatabaseName,
+		dbConfig.SSL,
+	)
+}
 
 	
 

@@ -1,4 +1,4 @@
-package library
+package postgres
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/adarsh-jaiss/library/sample/sample"
+	"github.com/adarsh-jaiss/library/sample/config"
 	"github.com/adarsh-jaiss/library/sample/types"
 	"github.com/joho/godotenv"
 )
@@ -23,17 +23,15 @@ func NewTestPostgres() (types.ISQL, error) {
 		log.Fatal("Error loading .env file")
 	}
 
-	dbConfig := &sample.DatabaseConfig{
+	dbConfig := &config.Config{
 		Username:     os.Getenv("POSTGRES_DB_USERNAME"),
-		Password:     os.Getenv("POSTGRES_DB_PASSWORD"),
 		Host:         os.Getenv("POSTGRES_DB_HOST"),
 		DatabaseName: os.Getenv("POSTGRES_DB_NAME"),
 		SSL:          os.Getenv("POSTGRES_DB_SSLMODE"),
-		DBType:       os.Getenv("POSTGRES_DB_TYPE"),
 		Port:         os.Getenv("POSTGRES_DB_PORT"),
 	}
-	
-	db,err := sql.Open("postgres", fmt.Sprintf( "user=%s password=%s dbname=%s sslmode=%s",dbConfig.Username,dbConfig.Password,dbConfig.DatabaseName,dbConfig.SSL))
+
+	db, err := sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", dbConfig.Username, DB_PASSWORD, dbConfig.DatabaseName, dbConfig.SSL))
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
 	}
@@ -98,7 +96,6 @@ func TestPostgresGetTables(t *testing.T) {
 	}
 	DBName := os.Getenv("POSTGRES_DB_NAME")
 
-	
 	tables, err := tClient.Tables(DBName)
 	if err != nil {
 		t.Errorf("Error getting tables, Expected No error, got: %v", err)
@@ -110,16 +107,14 @@ func TestPostgresGetTables(t *testing.T) {
 func TestPostgresNewclient(t *testing.T) {
 	os.Setenv("POSTGRES_DB_TYPE", "postgres")
 
-	DBConfig := &sample.DatabaseConfig{
+	DBConfig := &config.Config{
 		Username:     os.Getenv("POSTGRES_DB_USERNAME"),
-		Password:     os.Getenv("POSTGRES_DB_PASSWORD"),
 		Host:         os.Getenv("POSTGRES_DB_HOST"),
 		DatabaseName: os.Getenv("POSTGRES_DB_NAME"),
 		SSL:          os.Getenv("POSTGRES_DB_SSL"),
-		DBType:       os.Getenv("POSTGRES_DB_TYPE"),
 	}
 
-	p := &Postgres{}
+	DBType := "postgres"
 
 	testCases := []struct {
 		name        string
@@ -128,7 +123,7 @@ func TestPostgresNewclient(t *testing.T) {
 	}{
 		{
 			name:        "Valid DB Type",
-			dbType:      DBConfig.DBType,
+			dbType:      DBType,
 			expectError: false,
 		},
 		{
@@ -140,7 +135,7 @@ func TestPostgresNewclient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client, err := p.NewClient(DBConfig, tc.dbType)
+			client, err := NewPostgresWithConfig(DBConfig)
 
 			if tc.expectError {
 				if err == nil {
