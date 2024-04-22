@@ -12,8 +12,10 @@ import (
 	// "github.com/joho/godotenv"
 )
 
+var DB_PASSWORD = "DB_PASSWORD"
+
 const (
-	DB_PASSWORD = "DB_PASSWORD"
+	
 	SCHEMA_QUERY = "DESCRIBE "
 	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?"
 )
@@ -29,14 +31,17 @@ func NewMySQL(dbClient *sql.DB) (types.ISQL, error) {
 
 }
 
-
 func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
+
+	if os.Getenv(DB_PASSWORD) != "" || len(os.Getenv(DB_PASSWORD)) != 0 {
+		DB_PASSWORD = os.Getenv(DB_PASSWORD)
+	}
+	
 	dsn := dbURLMySQL(dbConfig)
 
-	
 	dbtype := types.MySQL
 	db, err := sql.Open(dbtype.String(), dsn)
 	if err != nil {

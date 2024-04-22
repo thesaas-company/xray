@@ -7,6 +7,7 @@ go get google.golang.org/api/option
 go get github.com/go-sql-driver/mysql
 go get github.com/lib/pq
 go get github.com/snowflakedb/gosnowflake
+go get github.com/sirupsen/logrus
 ```
 
 

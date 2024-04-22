@@ -10,8 +10,9 @@ import (
 	"github.com/adarsh-jaiss/library/sample/types"
 )
 
+var DB_PASSWORD = "DB_PASSWORD"
+
 const (
-	DB_PASSWORD = "DB_PASSWORD"
 	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
 	POSTGRES_TABLE_LIST_QUERY= "SELECT table_name FROM information_schema.tables WHERE table_schema= $1 AND table_type='BASE TABLE';"
 )
@@ -27,11 +28,15 @@ func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
 }
 
 func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
-	// TODO: Add check for env variable DB_PASSWORD, same as mysql
+	// TODO: Add check for env variable DB_PASSWORD, same as mysql  --> done!
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
-
+	if os.Getenv(DB_PASSWORD) != "" || len(os.Getenv(DB_PASSWORD)) != 0 {
+		DB_PASSWORD = os.Getenv(DB_PASSWORD)
+	}
+	
+	
 	dbtype := types.Postgres
 	db, err := sql.Open(dbtype.String(), fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, DB_PASSWORD, dbConfig.DatabaseName, dbConfig.SSL))
 	if err != nil {

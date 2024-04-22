@@ -8,6 +8,7 @@ type ISQL interface {
 	Schema(string) ([]byte, error)
 	Execute(string) ([]byte, error)
 	Tables(string) ([]byte, error)
+	
 }
 
 type Table struct {
