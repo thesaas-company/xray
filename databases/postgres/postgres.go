@@ -10,17 +10,23 @@ import (
 	"github.com/adarsh-jaiss/library/sample/types"
 )
 
+// DB_PASSWORD is the environment variable that holds the database password.
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-	POSTGRES_SCHEMA_QUERY     = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s;"
-	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= %s AND table_type='BASE TABLE';"
+    // POSTGRES_SCHEMA_QUERY is the SQL query used to describe a table schema in PostgreSQL.
+    POSTGRES_SCHEMA_QUERY     = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s;"
+
+    // POSTGRES_TABLE_LIST_QUERY is the SQL query used to list all tables in a schema in PostgreSQL.
+    POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= %s AND table_type='BASE TABLE';"
 )
 
+// Postgres is a PostgreSQL implementation of the ISQL interface.
 type Postgres struct {
 	Client *sql.DB
 }
 
+// NewPostgres creates a new PostgreSQL client with the given sql.DB.
 func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
 	return &Postgres{
 		Client: dbClient,
@@ -28,6 +34,8 @@ func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
 
 }
 
+// NewPostgresWithConfig creates a new PostgreSQL client with the given configuration.
+// It returns an error if the DB_PASSWORD environment variable is not set.
 func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	// TODO: Add check for env variable DB_PASSWORD, same as mysql  --> done!
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { 
@@ -45,6 +53,8 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	}, nil
 }
 
+// Schema returns the schema of a table in the database.
+// It returns an error if the SQL query fails.
 func (p *Postgres) Schema(table string) (types.Table, error) {
 	// TODO: Extract More datapoint if possible
 	var response types.Table
@@ -86,6 +96,8 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 
 }
 
+// Execute executes a SQL query and returns the result as a JSON byte slice.
+// It returns an error if the SQL query fails.
 func (p *Postgres) Execute(query string) ([]byte, error) {
 	// execute the sql statement
 	rows, err := p.Client.Query(query)
@@ -134,6 +146,8 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
+// Tables returns a list of all tables in the given database.
+// It returns an error if the SQL query fails.
 func (p *Postgres) Tables(databaseName string) ([]string, error) {
 	rows, err := p.Client.Query(fmt.Sprintf(POSTGRES_TABLE_LIST_QUERY, databaseName))
 	if err != nil {

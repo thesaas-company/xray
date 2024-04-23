@@ -12,15 +12,17 @@ import (
 	// "github.com/joho/godotenv"
 )
 
+// DB_PASSWORD is the environment variable that stores the database password.
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-	SCHEMA_QUERY            = "DESCRIBE %s"
-	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = %s"
+	SCHEMA_QUERY            = "DESCRIBE %s"	// SCHEMA_QUERY is the SQL query used to describe a table schema.
+	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = %s"  // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
 )
 
+// MySQL is a MySQL implementation of the ISQL interface.
 type MySQL struct {
-	Client *sql.DB
+	Client *sql.DB // Client is the MySQL database client.
 }
 
 func NewMySQL(dbClient *sql.DB) (types.ISQL, error) {
@@ -30,6 +32,8 @@ func NewMySQL(dbClient *sql.DB) (types.ISQL, error) {
 
 }
 
+// NewMySQLWithConfig creates a new MySQL client with the given configuration.
+// It returns an error if the DB_PASSWORD environment variable is not set.
 func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
