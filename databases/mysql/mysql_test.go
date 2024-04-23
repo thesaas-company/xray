@@ -89,7 +89,7 @@ func TestGetTableName(t *testing.T) {
 		AddRow(tableList[0]).
 		AddRow(tableList[1]).
 		AddRow(tableList[2])
-	mock.ExpectQuery(fmt.Sprintf(MYSQL_TABLES_LIST_QUERY, "test")).WillReturnRows(rows)
+	mock.ExpectQuery(MYSQL_TABLES_LIST_QUERY).WithArgs("test").WillReturnRows(rows)
 
 	m, err := NewMySQL(db)
 	if err != nil {

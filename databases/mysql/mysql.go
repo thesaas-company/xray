@@ -149,7 +149,7 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 func (m *MySQL) Tables(databaseName string) ([]string, error) {
 
 	// execute the sql statement
-	rows, err := m.Client.Query(fmt.Sprintf(MYSQL_TABLES_LIST_QUERY, databaseName))
+	rows, err := m.Client.Query(MYSQL_TABLES_LIST_QUERY, databaseName)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
