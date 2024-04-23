@@ -17,7 +17,7 @@ var DB_PASSWORD = "DB_PASSWORD"
 
 const (
 	SCHEMA_QUERY            = "DESCRIBE %s"                                                              // SCHEMA_QUERY is the SQL query used to describe a table schema.
-	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = %s" // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
+	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?" // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
 )
 
 // MySQL is a MySQL implementation of the ISQL interface.
