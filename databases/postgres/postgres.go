@@ -30,7 +30,7 @@ func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
 
 func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	// TODO: Add check for env variable DB_PASSWORD, same as mysql  --> done!
-	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { 
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
@@ -61,11 +61,12 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra,  &column.IsPrimary, &column.IsIndex); err != nil {
 			return response, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
 		column.Metatags = []string{} // default metatags as an empty slice
+		column.Metatags = append(column.Metatags, column.Name)
 		column.Visibility = true     // default visibility
 		columns = append(columns, column)
 	}

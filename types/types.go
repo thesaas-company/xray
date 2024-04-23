@@ -8,7 +8,6 @@ type ISQL interface {
 	Schema(string) (Table, error)
 	Execute(string) ([]byte, error)
 	Tables(string) ([]string, error)
-	
 }
 
 type Table struct {
@@ -29,9 +28,12 @@ type Column struct {
 	Description  string         `json:"description"`
 	Metatags     []string       `json:"metatags"` // Add Column name in metatags, ["name"]
 	Visibility   bool           `json:"visibility"`
-	// TODO: Add more datapoints like (Not P0)
+	IsIndex      bool           `json:"is_index"`
+	IsPrimary    bool           `json:"is_primary"`
+	// TODO: Add more datapoints like (Not P0) -- DONE!!!
 	// isIndex, IsPrimary, Foreign Key,
 }
+
 
 type QueryResult struct {
 	Columns []string        `json:"columns"`

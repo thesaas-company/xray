@@ -29,8 +29,8 @@ func TestSchema(t *testing.T) {
 
 	table_name := "user"
 
-	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra"}
-	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "PRIMARY", "This is the primary key of the table to identify users", "auto_increment")
+	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra", "IsPrimary", "IsIndex", }
+	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "PRIMARY", "This is the primary key of the table to identify users", "auto_increment", "true", "true")
 
 	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(POSTGRES_SCHEMA_QUERY, table_name))).WillReturnRows(mockRows)
 

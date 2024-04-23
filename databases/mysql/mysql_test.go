@@ -25,7 +25,7 @@ func TestSchema(t *testing.T) {
 	defer db.Close()
 
 	tableName := "user"
-	mockRows := sqlmock.NewRows([]string{"Field", "Type", "Null", "Key", "Default", "Extra"}).AddRow("id", "int", "NO", "PRI", nil, "auto_increment")
+	mockRows := sqlmock.NewRows([]string{"Field", "Type", "Null", "Key", "Default", "Extra", "IsPrimary", "IsIndex" }).AddRow("id", "int", "NO", "PRI", nil, "auto_increment", "true", "true")
 
 	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(SCHEMA_QUERY, tableName))).WillReturnRows(mockRows)
 

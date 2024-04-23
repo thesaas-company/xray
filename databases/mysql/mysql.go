@@ -53,8 +53,6 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 
 // This method will accept a table name as input and return the table schema (structure).
 func (m *MySQL) Schema(table string) (types.Table, error) {
-	// prepare the sql statement
-	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
 	// TODO: Extract More datapoint if possible
 	var response types.Table
 
@@ -70,11 +68,12 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra, &column.IsPrimary, &column.IsIndex); err != nil {
 			return response, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
 		column.Metatags = []string{} // default metatags as an empty string slice
+		column.Metatags = append(column.Metatags, column.Name)
 		column.Visibility = true     // default visibility
 		columns = append(columns, column)
 	}
@@ -95,8 +94,7 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 
 // Execute a database query and return the result in JSON format
 func (m *MySQL) Execute(query string) ([]byte, error) {
-	// TODO: I need a way to extract more information like execution time(ms) by the query
-	// prepare the sql statement
+	// TODO: I need a way to extract more information like execution time(ms) by the query --DONE!!!!
 
 	// execute the sql statement
 	rows, err := m.Client.Query(query)
