@@ -71,7 +71,7 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra, &column.IsPrimary, &column.IsIndex); err != nil {
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
 			return response, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
