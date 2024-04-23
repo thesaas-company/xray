@@ -1,4 +1,4 @@
-module github.com/adarsh-jaiss/library/sample
+module github.com/adarsh-jaiss/Xray
 
 go 1.22.1
 

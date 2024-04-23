@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adarsh-jaiss/library/sample/config"
-	"github.com/adarsh-jaiss/library/sample/types"
+	"github.com/adarsh-jaiss/Xray/config"
+	"github.com/adarsh-jaiss/Xray/types"
 	_ "github.com/go-sql-driver/mysql"
 	// "github.com/joho/godotenv"
 )
@@ -16,8 +16,8 @@ import (
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-	SCHEMA_QUERY            = "DESCRIBE %s"	// SCHEMA_QUERY is the SQL query used to describe a table schema.
-	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = %s"  // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
+	SCHEMA_QUERY            = "DESCRIBE %s"                                                              // SCHEMA_QUERY is the SQL query used to describe a table schema.
+	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = %s" // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
 )
 
 // MySQL is a MySQL implementation of the ISQL interface.
@@ -57,7 +57,7 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 
 // This method will accept a table name as input and return the table schema (structure).
 func (m *MySQL) Schema(table string) (types.Table, error) {
-	// TODO: Extract More datapoint if possible
+	// TODO: Extract More datapoint if possible --DONE!!!!
 	var response types.Table
 
 	// execute the sql statement
@@ -78,7 +78,7 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 		column.Description = ""      // default description
 		column.Metatags = []string{} // default metatags as an empty string slice
 		column.Metatags = append(column.Metatags, column.Name)
-		column.Visibility = true     // default visibility
+		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
 

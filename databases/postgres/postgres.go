@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adarsh-jaiss/library/sample/config"
-	"github.com/adarsh-jaiss/library/sample/types"
+	"github.com/adarsh-jaiss/Xray/config"
+	"github.com/adarsh-jaiss/Xray/types"
 )
 
 // DB_PASSWORD is the environment variable that holds the database password.
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-    // POSTGRES_SCHEMA_QUERY is the SQL query used to describe a table schema in PostgreSQL.
-    POSTGRES_SCHEMA_QUERY     = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s;"
+	// POSTGRES_SCHEMA_QUERY is the SQL query used to describe a table schema in PostgreSQL.
+	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s;"
 
-    // POSTGRES_TABLE_LIST_QUERY is the SQL query used to list all tables in a schema in PostgreSQL.
-    POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= %s AND table_type='BASE TABLE';"
+	// POSTGRES_TABLE_LIST_QUERY is the SQL query used to list all tables in a schema in PostgreSQL.
+	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= %s AND table_type='BASE TABLE';"
 )
 
 // Postgres is a PostgreSQL implementation of the ISQL interface.
@@ -37,8 +37,7 @@ func NewPostgres(dbClient *sql.DB) (types.ISQL, error) {
 // NewPostgresWithConfig creates a new PostgreSQL client with the given configuration.
 // It returns an error if the DB_PASSWORD environment variable is not set.
 func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
-	// TODO: Add check for env variable DB_PASSWORD, same as mysql  --> done!
-	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { 
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 {
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
@@ -56,7 +55,7 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 // Schema returns the schema of a table in the database.
 // It returns an error if the SQL query fails.
 func (p *Postgres) Schema(table string) (types.Table, error) {
-	// TODO: Extract More datapoint if possible
+	// TODO: Extract More datapoint if possible -- DONE!!!
 	var response types.Table
 
 	// execute the sql statement
@@ -71,13 +70,13 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra,  &column.IsPrimary, &column.IsIndex); err != nil {
+		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra, &column.IsPrimary, &column.IsIndex); err != nil {
 			return response, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
 		column.Metatags = []string{} // default metatags as an empty slice
 		column.Metatags = append(column.Metatags, column.Name)
-		column.Visibility = true     // default visibility
+		column.Visibility = true // default visibility
 		columns = append(columns, column)
 	}
 

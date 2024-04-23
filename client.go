@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/adarsh-jaiss/library/sample/config"
-	"github.com/adarsh-jaiss/library/sample/databases/mysql"
-	"github.com/adarsh-jaiss/library/sample/databases/postgres"
-	"github.com/adarsh-jaiss/library/sample/logger"
-	"github.com/adarsh-jaiss/library/sample/types"
-	// "github.com/adarsh-jaiss/library/sample/types"
+	"github.com/adarsh-jaiss/Xray/config"
+	"github.com/adarsh-jaiss/Xray/databases/mysql"
+	"github.com/adarsh-jaiss/Xray/databases/postgres"
+	"github.com/adarsh-jaiss/Xray/logger"
+	"github.com/adarsh-jaiss/Xray/types"
+	// "github.com/adarsh-jaiss/Xray/types"
 )
 
 // NewClientWithConfig creates a new SQL client with the given configuration and database type.

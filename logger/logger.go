@@ -3,7 +3,7 @@ package logger
 import (
 	"time"
 
-	"github.com/adarsh-jaiss/library/sample/types"
+	"github.com/adarsh-jaiss/Xray/types"
 	"github.com/sirupsen/logrus"
 )
 

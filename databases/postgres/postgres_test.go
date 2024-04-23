@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/adarsh-jaiss/library/sample/types"
+	"github.com/adarsh-jaiss/Xray/types"
 )
 
 func MockDB() (*sql.DB, sqlmock.Sqlmock) {
@@ -29,7 +29,7 @@ func TestSchema(t *testing.T) {
 
 	table_name := "user"
 
-	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra", "IsPrimary", "IsIndex", }
+	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra", "IsPrimary", "IsIndex"}
 	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "PRIMARY", "This is the primary key of the table to identify users", "auto_increment", "true", "true")
 
 	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(POSTGRES_SCHEMA_QUERY, table_name))).WillReturnRows(mockRows)
@@ -80,7 +80,6 @@ func TestExecute(t *testing.T) {
 	}
 }
 
-// TODO : NEED HELP!!!!!
 func TestGetTableName(t *testing.T) {
 	db, mock := MockDB()
 	defer db.Close()
