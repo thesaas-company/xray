@@ -1,14 +1,14 @@
-package library
+package xray
 
 import (
 	"database/sql"
 	"fmt"
 
-	"github.com/adarsh-jaiss/xray/config"
-	"github.com/adarsh-jaiss/xray/databases/mysql"
-	"github.com/adarsh-jaiss/xray/databases/postgres"
-	"github.com/adarsh-jaiss/xray/logger"
-	"github.com/adarsh-jaiss/xray/types"
+	"github.com/thesaas-company/xray/config"
+	"github.com/thesaas-company/xray/databases/mysql"
+	"github.com/thesaas-company/xray/databases/postgres"
+	"github.com/thesaas-company/xray/logger"
+	"github.com/thesaas-company/xray/types"
 )
 
 // NewClientWithConfig creates a new SQL client with the given configuration and database type.

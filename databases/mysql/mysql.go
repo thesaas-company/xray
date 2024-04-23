@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adarsh-jaiss/xray/config"
-	"github.com/adarsh-jaiss/xray/types"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/thesaas-company/xray/config"
+	"github.com/thesaas-company/xray/types"
 	// "github.com/joho/godotenv"
 )
 
@@ -97,7 +97,7 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 
 // Execute a database query and return the result in JSON format
 func (m *MySQL) Execute(query string) ([]byte, error) {
-	
+
 	// execute the sql statement
 	rows, err := m.Client.Query(query)
 	if err != nil {

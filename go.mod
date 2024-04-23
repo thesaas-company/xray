@@ -1,6 +1,6 @@
-module github.com/adarsh-jaiss/xray
+module github.com/thesaas-company/xray
 
-go 1.22.1
+go 1.19
 
 require (
 	github.com/go-sql-driver/mysql v1.8.1

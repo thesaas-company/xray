@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adarsh-jaiss/xray/config"
-	"github.com/adarsh-jaiss/xray/types"
+	"github.com/thesaas-company/xray/config"
+	"github.com/thesaas-company/xray/types"
 )
 
 // DB_PASSWORD is the environment variable that holds the database password.
@@ -55,7 +55,7 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 // Schema returns the schema of a table in the database.
 // It returns an error if the SQL query fails.
 func (p *Postgres) Schema(table string) (types.Table, error) {
-	
+
 	var response types.Table
 
 	// execute the sql statement

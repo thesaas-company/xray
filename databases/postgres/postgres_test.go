@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/adarsh-jaiss/xray/types"
+	"github.com/thesaas-company/xray/types"
 )
 
 func MockDB() (*sql.DB, sqlmock.Sqlmock) {

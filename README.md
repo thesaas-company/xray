@@ -3,7 +3,7 @@
 ## Install 
 
 ```bash
-go get github.com/adarsh-jaiss/xray@latest
+go get github.com/thesaas-company/xray@latest
 ```
 
 ## Example
@@ -25,7 +25,7 @@ $ export DB_PASSWORD=college
 package main 
 
 import (
-    "github.com/adarsh-jaiss/xray"
+    "github.com/thesaas-company/xray"
 )
 
 func main() {
@@ -65,7 +65,7 @@ $ export DB_PASSWORD=college
 package main 
 
 import (
-    "github.com/adarsh-jaiss/xray"
+    "github.com/thesaas-company/xray"
 )
 
 func main() {

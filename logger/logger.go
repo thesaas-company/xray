@@ -3,8 +3,8 @@ package logger
 import (
 	"time"
 
-	"github.com/adarsh-jaiss/xray/types"
 	"github.com/sirupsen/logrus"
+	"github.com/thesaas-company/xray/types"
 )
 
 type Logger struct {
