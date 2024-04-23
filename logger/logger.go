@@ -1,4 +1,4 @@
-package middleware
+package logger
 
 import (
 	"time"
@@ -7,17 +7,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type LogMiddleware struct {
+type Logger struct {
 	logs types.ISQL
 }
 
-func NewLogMiddleware(logs types.ISQL) *LogMiddleware {
-	return &LogMiddleware{
+func NewLogger(logs types.ISQL) *Logger {
+	return &Logger{
 		logs: logs,
 	}
 }
 
-func (l *LogMiddleware) Schema(table string) ([]byte, error) {
+func (l *Logger) Schema(table string) (Table, error) {
 	defer func(start time.Time) {
 		// Log the execution time
 		logrus.WithFields(logrus.Fields{
@@ -38,7 +38,7 @@ func (l *LogMiddleware) Schema(table string) ([]byte, error) {
 	return result, err
 }
 
-func (l *LogMiddleware) Execute(query string) ([]byte, error) {
+func (l *Logger) Execute(query string) ([]byte, error) {
 	
 	defer func(start time.Time) {
 		// Log the execution time
@@ -60,7 +60,7 @@ func (l *LogMiddleware) Execute(query string) ([]byte, error) {
 	return result, err
 }
 
-func (l *LogMiddleware) Tables(DatabaseName string) ([]byte, error) {
+func (l *Logger) Tables(DatabaseName string) ([]string, error) {
 	defer func(start time.Time) {
 		// Log the execution time
 		logrus.WithFields(logrus.Fields{

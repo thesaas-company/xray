@@ -36,9 +36,7 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 
-	if os.Getenv(DB_PASSWORD) != "" || len(os.Getenv(DB_PASSWORD)) != 0 {
-		DB_PASSWORD = os.Getenv(DB_PASSWORD)
-	}
+	DB_PASSWORD = os.Getenv(DB_PASSWORD)
 	
 	dsn := dbURLMySQL(dbConfig)
 
@@ -55,7 +53,7 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 }
 
 // This method will accept a table name as input and return the table schema (structure).
-func (m *MySQL) Schema(table string) ([]byte, error) {
+func (m *MySQL) Schema(table string) (types.Table, error) {
 	// prepare the sql statement
 	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
 	// TODO: Extract More datapoint if possible
@@ -92,21 +90,13 @@ func (m *MySQL) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := types.Table{
+	return types.Table{
 		Name:        table,
 		Columns:     columns,
 		ColumnCount: int64(len(columns)),
 		Description: "", 
 		Metatags:    []string{}, 		
-	}
-
-	// convert the table context to json
-	jsonData, err := json.Marshal(tableContext)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling table schema: %v", err)
-	}
-
-	return jsonData, nil
+	},nil
 }
 
 // Execute a database query and return the result in JSON format
@@ -167,7 +157,7 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 }
 
 // Retrieve the names of tables in the specified database.
-func (m *MySQL) Tables(databaseName string) ([]byte, error) {
+func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	statememt, err := m.Client.Prepare(MYSQL_TABLES_LIST_QUERY)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing sql statement: %v", err)
@@ -196,13 +186,7 @@ func (m *MySQL) Tables(databaseName string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows:%v",err)
 	}
 
-	// convert the result to json
-	jsonData,err := json.Marshal(tables)
-	if err!= nil{
-		return nil,fmt.Errorf("error marshalling json: %v",err)
-	}
-
-	return jsonData, nil
+	return tables, nil
 }
 
 

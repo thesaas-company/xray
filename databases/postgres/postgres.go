@@ -48,7 +48,7 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 }
 
 
-func (p *Postgres) Schema(table string) ([]byte, error) {
+func (p *Postgres) Schema(table string) (types.Table, error) {
 	// TODO: Extract More datapoint if possible
 	statement, err := p.Client.Prepare(POSTGRES_SCHEMA_QUERY)
 	if err != nil {
@@ -83,21 +83,15 @@ func (p *Postgres) Schema(table string) ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	tableContext := types.Table{
+	return types.Table{
 		Name:        table,
 		Columns:        columns,
 		ColumnCount: int64(len(columns)),
 		Description: "",
 		Metatags:    []string{},
-	}
+	}, nil
 
-	// convert the table context to json
-	jsonData, err := json.Marshal(tableContext)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling table schema: %v", err)
-	}
-
-	return jsonData, nil
+	
 }
 
 func (p *Postgres) Execute(query string) ([]byte, error) {
@@ -155,7 +149,7 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
-func (p *Postgres) Tables(databaseName string) ([]byte, error) {
+func (p *Postgres) Tables(databaseName string) ([]string, error) {
 	statememt, err := p.Client.Prepare(POSTGRES_TABLE_LIST_QUERY)
 	if err!= nil{
 		return nil,fmt.Errorf("error preparing sql statement: %v",err)
@@ -181,12 +175,8 @@ func (p *Postgres) Tables(databaseName string) ([]byte, error) {
 		return nil, fmt.Errorf("error interating over rows: %v",err)
 	}
 
-	jsonData,err := json.Marshal(tables)
-	if err != nil{
-		return nil, fmt.Errorf("error marshalling json: %v",err)
-	}
 
-	return jsonData,nil
+	return tables,nil
 
 }
 

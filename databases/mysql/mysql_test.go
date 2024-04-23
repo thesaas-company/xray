@@ -1,168 +1,122 @@
-// This is End to End Testing using real database connection.
-
 package mysql
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
+	"regexp"
 	"testing"
 
-	_ "github.com/go-sql-driver/mysql"
-
-	"github.com/adarsh-jaiss/library/sample/config"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/adarsh-jaiss/library/sample/types"
-	"github.com/joho/godotenv"
 )
 
-// TODO: currently you are doing ent2end testing with real database, It is possible to mock the  database client, Not a P0 but unit test should use a mock database client
-type TestMySql struct {
-	Client *sql.DB
+// setting up a mock db connection
+func MockDB() (*sql.DB, sqlmock.Sqlmock) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		panic("An error occurred while creating a new mock database connection")
+	}
+
+	// Add dummy data for testing
+	mockRows := sqlmock.NewRows([]string{"id", "name"}).
+		AddRow(1, "John").
+		AddRow(2, "Alice").
+		AddRow(3, "Bob")
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM user`)).WillReturnRows(mockRows)
+
+	return db, mock
 }
 
-const (
-	DBType = "mysql"
-)
+func TestSchema(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
 
-func NewTestMySQL() (types.ISQL, error) {
-	err := godotenv.Load()
+	tableName := "user"
+	query := "DESCRIBE " + tableName
+
+	columns := []string{"Field", "Type", "Null", "Key", "Default", "Extra"}
+	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "NO", "PRI", nil, "auto_increment")
+
+	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
+
+	// we then create a new instance of our MySQL object and test the function
+	m := MySQL{Client: db}
+	res, err := m.Schema(tableName)
 	if err != nil {
-		log.Fatal("Error loading .env file", err)
+		t.Errorf("error executing query: %s", err)
 	}
 
-	DatabaseConfig := &config.Config{
-		Username:     os.Getenv("MYSQL_DB_USERNAME"),
-		Host:         os.Getenv("MYSQL_DB_HOST"),
-		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
-		SSL:          os.Getenv("MYSQL_DB_SSL"),
-		Port:         os.Getenv("MYSQL_DB_PORT"),
+	var response types.Table
+	if err := json.Unmarshal(res, &response); err != nil {
+		t.Errorf("error was not expected while recording stats: %s", err)
 	}
 
-	dsn := dbURLMySQL(DatabaseConfig)
-	db, err := sql.Open(DBType, dsn)
-	if err != nil {
-		return nil, fmt.Errorf("error opening connection to database: %v", err)
-	}
+	fmt.Printf("Table schema : %+v\n", response)
 
-	return &MySQL{
-		Client: db,
-	}, nil
-}
-
-func TestMySQLConnection(t *testing.T) {
-	tClient, err := NewTestMySQL()
-	if err != nil {
-		t.Errorf("Error connecting client, Expected No error, got: %v", err)
-	}
-	if tClient == nil {
-		t.Errorf("Expected a client, got nil")
+	// we make sure that all expectations were met, otherwise an error will be reported
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 
 }
 
-func TestMysqlSchema(t *testing.T) {
-	tClient, err := NewTestMySQL()
+func TestExecute(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+
+	query := `SELECT * FROM user`
+	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "John")
+
+	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
+
+	m := MySQL{Client: db}
+	res, err := m.Execute(query)
 	if err != nil {
-		t.Errorf("Error creating client, Expected No error, got: %v", err)
+		t.Errorf("error executing the query: %s", err)
 	}
 
-	tableName := os.Getenv("POSTGRES_TABLE_NAME")
-	res, err := tClient.Schema(tableName)
-	if err != nil {
-		t.Errorf("Error getting schema, Expected No error, got: %v", err)
+	var result types.QueryResult
+	if err := json.Unmarshal(res, &result); err != nil {
+		t.Errorf("error unmarshalling the result: %s", err)
 	}
 
-	var jsonRes types.Table
-	err = json.Unmarshal(res, &jsonRes)
-	if err != nil {
-		t.Errorf("Error unmarshalling schema, Expected No error, got: %v", err)
+	fmt.Printf("Query result: %+v\n", result)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 
-	// fmt.Println(res)
-	t.Logf("schema: %v", jsonRes)
 }
 
-func TestMysqlExecute(t *testing.T) {
-	tClient, err := NewTestMySQL()
+func TestGetTableName(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+
+	tableList := []string{"user", "product", "order"}
+
+	// Retrieve the list of tables
+	rows := sqlmock.NewRows([]string{"table_name"}).
+		AddRow(tableList[0]).
+		AddRow(tableList[1]).
+		AddRow(tableList[2])
+	mock.ExpectQuery(MYSQL_TABLES_LIST_QUERY).WillReturnRows(rows)
+
+	m := MySQL{Client: db}
+	tables, err := m.Tables("test")
 	if err != nil {
-		t.Errorf("Error creating client, Expected No error, got: %v", err)
+		t.Errorf("error retrieving table names: %s", err)
 	}
 
-	query := "SELECT * FROM $1"
-	res, err := tClient.Execute(query)
-
+	var res []string
+	err = json.Unmarshal(tables, &res)
 	if err != nil {
-		t.Errorf("Error executing query, Expected No error, got: %v", err)
+		t.Errorf("error unmarshalling the result : %s", err)
 	}
 
-	t.Logf("Execute result: %v", res)
-}
+	fmt.Printf("Table names: %+v\n", res)
 
-func TestGetTables(t *testing.T) {
-	tClient, err := NewTestMySQL()
-	if err != nil {
-		t.Errorf("Error creating client, Expected No error, got: %v", err)
-
-	}
-	DBName := os.Getenv("MYSQL_DB_NAME")
-	tables, err := tClient.Tables(DBName)
-	if err != nil {
-		t.Errorf("Error getting tables, Expected No error, got: %v", err)
-	}
-
-	t.Logf("Tables List: %v", tables)
-}
-
-func TestNewClient(t *testing.T) {
-	os.Setenv("MYSQL_DB_TYPE", "mysql")
-
-	DBConfig := &config.Config{
-		Username:     os.Getenv("MYSQL_DB_USERNAME"),
-		Host:         os.Getenv("MYSQL_DB_HOST"),
-		DatabaseName: os.Getenv("MYSQL_DB_NAME"),
-		SSL:          os.Getenv("MYSQL_DB_SSL"),
-	}
-
-	testCases := []struct {
-		name        string
-		dbType      string
-		expectError bool
-	}{
-		{
-			name:        "Valid DB Type",
-			dbType:      DBType,
-			expectError: false,
-		},
-		{
-			name:        "Invalid DB Type",
-			dbType:      "unsupported",
-			expectError: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			client, err := NewMySQLWithConfig(DBConfig)
-
-			if tc.expectError {
-				if err == nil {
-					t.Errorf("Expected an error, got nil")
-				}
-				if client != nil {
-					t.Errorf("Expected nil, got %v", client)
-				}
-			} else {
-				if err != nil {
-					t.Log(tc.dbType)
-					t.Errorf("Error creating new client, Expected No error, got: %v", err)
-				}
-				_, ok := client.(types.ISQL)
-				if !ok {
-					t.Errorf("Expected a client implementing ISQL, got %T", client)
-				}
-			}
-		})
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

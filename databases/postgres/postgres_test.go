@@ -1,160 +1,121 @@
+// This is unit testing of postgres using a mock DB
+
 package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"log"
-	"os"
+	"reflect"
+	"regexp"
 	"testing"
 
-	"github.com/adarsh-jaiss/library/sample/config"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/adarsh-jaiss/library/sample/types"
-	"github.com/joho/godotenv"
 )
 
-type TestPostgres struct {
-	Client *sql.DB
+func MockDB() (*sql.DB, sqlmock.Sqlmock) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		panic("An error occurred while creating a new mock database connection")
+	}
+
+	return db, mock
 }
 
-func NewTestPostgres() (types.ISQL, error) {
+func TestSchema(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+	POSTGRES_SCHEMA_QUERY := "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
 
-	err := godotenv.Load()
+	table_name := "user"
+
+	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra"}
+
+	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "PRIMARY", "This is the primary key of the table to identify users", "auto_increment")
+	mock.ExpectPrepare(regexp.QuoteMeta(POSTGRES_SCHEMA_QUERY))
+	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_SCHEMA_QUERY)).WithArgs(table_name).WillReturnRows(mockRows)
+
+	p := Postgres{Client: db}
+	res, err := p.Schema(table_name)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		t.Errorf("error executing query : %v", err)
 	}
 
-	dbConfig := &config.Config{
-		Username:     os.Getenv("POSTGRES_DB_USERNAME"),
-		Host:         os.Getenv("POSTGRES_DB_HOST"),
-		DatabaseName: os.Getenv("POSTGRES_DB_NAME"),
-		SSL:          os.Getenv("POSTGRES_DB_SSLMODE"),
-		Port:         os.Getenv("POSTGRES_DB_PORT"),
+	var response types.Table
+	if err := json.Unmarshal(res, &response); err != nil {
+		t.Errorf("error was not expected while recording stats: %s", err)
 	}
 
-	db, err := sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", dbConfig.Username, DB_PASSWORD, dbConfig.DatabaseName, dbConfig.SSL))
-	if err != nil {
-		return nil, fmt.Errorf("database connecetion failed : %v", err)
-	}
+	fmt.Printf("Table schema: %+v\n", response)
 
-	return &Postgres{
-		Client: db,
-	}, nil
-}
-
-func TestPostgresConnection(t *testing.T) {
-	tClient, err := NewTestPostgres()
-	if err != nil {
-		t.Errorf("Error connecting client, Expected No error, got: %v", err)
-	}
-	if tClient == nil {
-		t.Errorf("Expected a client, got nil")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there was unfulfilled expectations: %s", err)
 	}
 
 }
 
-func TestPostgresSchema(t *testing.T) {
-	tClient, err := NewTestPostgres()
+func TestExecute(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+
+	query := `SELECT * FROM user`
+	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Rohan")
+
+	mock.ExpectPrepare(regexp.QuoteMeta(query))
+	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
+
+	p := Postgres{Client: db}
+	res, err := p.Execute(query)
 	if err != nil {
-		t.Errorf("Error connecting client, Expected No error, got: %v", err)
+		t.Errorf("error executing the query: %s", err)
 	}
 
-	tableName := os.Getenv("POSTGRES_TABLE_NAME")
-	res, err := tClient.Schema(tableName)
-	if err != nil {
-		t.Errorf("Error retrieving schema, Expected No error, got: %v", err)
+	var result types.QueryResult
+	if err := json.Unmarshal(res, &result); err != nil {
+		t.Errorf("error unmarshalling the result: %s", err)
 	}
 
-	if res == nil {
-		t.Errorf("Expected schema, got nil")
+	fmt.Printf("Query result: %+v\n", result)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-
-	t.Logf("schema: %v", res)
 }
 
-func TestPostgresExecute(t *testing.T) {
-	tClient, err := NewTestPostgres()
+
+// TODO : NEED HELP!!!!!
+func TestGetTableName(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+
+	tableList := []string{"user", "Credit", "Debit"}
+	TableName := "test"
+	POSTGRES_TABLE_LIST_QUERY := "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE';"
+	rows := sqlmock.NewRows([]string{TableName}).
+		AddRow(tableList[0]).
+		AddRow(tableList[1]).
+		AddRow(tableList[2])
+	mock.ExpectPrepare(regexp.QuoteMeta(POSTGRES_TABLE_LIST_QUERY))
+	db.Prepare(POSTGRES_TABLE_LIST_QUERY)
+	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_TABLE_LIST_QUERY)).WithArgs(TableName).WillReturnRows(rows)
+
+	m := Postgres{Client: db}
+	tables, err := m.Tables(TableName)
 	if err != nil {
-		t.Errorf("Error connecting client, Expected No error, got: %v", err)
-	}
-	table := "user"
-	query := "SELECT * FROM " + table
-	res, err := tClient.Execute(query)
-
-	if err != nil {
-		t.Errorf("Error executing query, Expected No error, got: %v", err)
+		t.Errorf("error retrieving table names: %s", err)
 	}
 
-	t.Logf("Execute result: %v", res)
-}
-
-func TestPostgresGetTables(t *testing.T) {
-
-	tClient, err := NewTestPostgres()
-	if err != nil {
-		t.Errorf("Error creating client, Expected No error, got: %v", err)
-
-	}
-	DBName := os.Getenv("POSTGRES_DB_NAME")
-
-	tables, err := tClient.Tables(DBName)
-	if err != nil {
-		t.Errorf("Error getting tables, Expected No error, got: %v", err)
+	var res []string
+	if err := json.Unmarshal(tables, &res); err != nil {
+		t.Errorf("error unmarshalling the result: %s", err)
 	}
 
-	t.Logf("Tables List: %v", tables)
-}
-
-func TestPostgresNewclient(t *testing.T) {
-	os.Setenv("POSTGRES_DB_TYPE", "postgres")
-
-	DBConfig := &config.Config{
-		Username:     os.Getenv("POSTGRES_DB_USERNAME"),
-		Host:         os.Getenv("POSTGRES_DB_HOST"),
-		DatabaseName: os.Getenv("POSTGRES_DB_NAME"),
-		SSL:          os.Getenv("POSTGRES_DB_SSL"),
+	expected := []string{"user", "Credit", "Debit"}
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("expected: %v, got: %v", expected, res)
 	}
 
-	DBType := "postgres"
-
-	testCases := []struct {
-		name        string
-		dbType      string
-		expectError bool
-	}{
-		{
-			name:        "Valid DB Type",
-			dbType:      DBType,
-			expectError: false,
-		},
-		{
-			name:        "Invalid DB Type",
-			dbType:      "unsupported",
-			expectError: true,
-		},
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			client, err := NewPostgresWithConfig(DBConfig)
-
-			if tc.expectError {
-				if err == nil {
-					t.Errorf("Expected an error, got nil")
-				}
-				if client != nil {
-					t.Errorf("Expected nil, got %v", client)
-				}
-			} else {
-				if err != nil {
-					t.Log(tc.dbType)
-					t.Errorf("Error creating new client, Expected No error, got: %v", err)
-				}
-				_, ok := client.(types.ISQL)
-				if !ok {
-					t.Errorf("Expected a client implementing ISQL, got %T", client)
-				}
-			}
-		})
-	}
-
 }

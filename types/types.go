@@ -5,9 +5,9 @@ import (
 )
 
 type ISQL interface {
-	Schema(string) ([]byte, error)
+	Schema(string) (Table, error)
 	Execute(string) ([]byte, error)
-	Tables(string) ([]byte, error)
+	Tables(string) ([]string, error)
 	
 }
 
