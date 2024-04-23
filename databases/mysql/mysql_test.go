@@ -17,15 +17,6 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		panic("An error occurred while creating a new mock database connection")
 	}
-
-	// Add dummy data for testing
-	mockRows := sqlmock.NewRows([]string{"id", "name"}).
-		AddRow(1, "John").
-		AddRow(2, "Alice").
-		AddRow(3, "Bob")
-
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM user`)).WillReturnRows(mockRows)
-
 	return db, mock
 }
 
@@ -34,23 +25,18 @@ func TestSchema(t *testing.T) {
 	defer db.Close()
 
 	tableName := "user"
-	query := "DESCRIBE " + tableName
+	mockRows := sqlmock.NewRows([]string{"Field", "Type", "Null", "Key", "Default", "Extra"}).AddRow("id", "int", "NO", "PRI", nil, "auto_increment")
 
-	columns := []string{"Field", "Type", "Null", "Key", "Default", "Extra"}
-	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "NO", "PRI", nil, "auto_increment")
-
-	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
+	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(SCHEMA_QUERY, tableName))).WillReturnRows(mockRows)
 
 	// we then create a new instance of our MySQL object and test the function
-	m := MySQL{Client: db}
-	res, err := m.Schema(tableName)
+	m, err := NewMySQL(db)
 	if err != nil {
 		t.Errorf("error executing query: %s", err)
 	}
-
-	var response types.Table
-	if err := json.Unmarshal(res, &response); err != nil {
-		t.Errorf("error was not expected while recording stats: %s", err)
+	response, err := m.Schema(tableName)
+	if err != nil {
+		t.Errorf("error executing query: %s", err)
 	}
 
 	fmt.Printf("Table schema : %+v\n", response)
@@ -66,13 +52,16 @@ func TestExecute(t *testing.T) {
 	db, mock := MockDB()
 	defer db.Close()
 
-	query := `SELECT * FROM user`
+	query := `SELECT id,name FROM user`
 	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "John")
 
-	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
+	mock.ExpectQuery(query).WillReturnRows(mockRows)
 
-	m := MySQL{Client: db}
-	res, err := m.Execute(query)
+	m, err := NewMySQL(db)
+	if err != nil {
+		t.Errorf("error executing query: %s", err)
+	}
+	res, err := m.Execute(regexp.QuoteMeta(query))
 	if err != nil {
 		t.Errorf("error executing the query: %s", err)
 	}
@@ -100,21 +89,18 @@ func TestGetTableName(t *testing.T) {
 		AddRow(tableList[0]).
 		AddRow(tableList[1]).
 		AddRow(tableList[2])
-	mock.ExpectQuery(MYSQL_TABLES_LIST_QUERY).WillReturnRows(rows)
+	mock.ExpectQuery(fmt.Sprintf(MYSQL_TABLES_LIST_QUERY, "test")).WillReturnRows(rows)
 
-	m := MySQL{Client: db}
+	m, err := NewMySQL(db)
+	if err != nil {
+		t.Errorf("error executing query: %s", err)
+	}
 	tables, err := m.Tables("test")
 	if err != nil {
 		t.Errorf("error retrieving table names: %s", err)
 	}
 
-	var res []string
-	err = json.Unmarshal(tables, &res)
-	if err != nil {
-		t.Errorf("error unmarshalling the result : %s", err)
-	}
-
-	fmt.Printf("Table names: %+v\n", res)
+	fmt.Printf("Table names: %+v\n", tables)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

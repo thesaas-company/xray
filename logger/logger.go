@@ -17,7 +17,7 @@ func NewLogger(logs types.ISQL) *Logger {
 	}
 }
 
-func (l *Logger) Schema(table string) (Table, error) {
+func (l *Logger) Schema(table string) (types.Table, error) {
 	defer func(start time.Time) {
 		// Log the execution time
 		logrus.WithFields(logrus.Fields{
@@ -39,7 +39,7 @@ func (l *Logger) Schema(table string) (Table, error) {
 }
 
 func (l *Logger) Execute(query string) ([]byte, error) {
-	
+
 	defer func(start time.Time) {
 		// Log the execution time
 		logrus.WithFields(logrus.Fields{

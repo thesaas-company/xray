@@ -15,9 +15,8 @@ import (
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-	
-	SCHEMA_QUERY = "DESCRIBE "
-	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?"
+	SCHEMA_QUERY            = "DESCRIBE %s"
+	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = %s"
 )
 
 type MySQL struct {
@@ -37,7 +36,7 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	}
 
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
-	
+
 	dsn := dbURLMySQL(dbConfig)
 
 	dbtype := types.MySQL
@@ -57,17 +56,12 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 	// prepare the sql statement
 	// This is important to avoid overhead of parsing and compiling the SQL command each time it's executed.
 	// TODO: Extract More datapoint if possible
-	statement, err := m.Client.Prepare(SCHEMA_QUERY + table)
-	if err != nil {
-		return nil, fmt.Errorf("error preparing sql statement: %v", err)
-	}
-
-	defer statement.Close()
+	var response types.Table
 
 	// execute the sql statement
-	rows, err := statement.Query()
+	rows, err := m.Client.Query(fmt.Sprintf(SCHEMA_QUERY, table))
 	if err != nil {
-		return nil, fmt.Errorf("error executing sql statement: %v", err)
+		return response, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
 	defer rows.Close()
@@ -77,40 +71,35 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 	for rows.Next() {
 		var column types.Column
 		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra); err != nil {
-			return nil, fmt.Errorf("error scanning rows: %v", err)
+			return response, fmt.Errorf("error scanning rows: %v", err)
 		}
-		column.Description = ""  // default description
-		column.Metatags = []string{}     // default metatags as an empty string slice
-		column.Visibility = true // default visibility
+		column.Description = ""      // default description
+		column.Metatags = []string{} // default metatags as an empty string slice
+		column.Visibility = true     // default visibility
 		columns = append(columns, column)
 	}
 
 	// checking for erros from iterating over the rows
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %v", err)
+		return response, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
 	return types.Table{
 		Name:        table,
 		Columns:     columns,
 		ColumnCount: int64(len(columns)),
-		Description: "", 
-		Metatags:    []string{}, 		
-	},nil
+		Description: "",
+		Metatags:    []string{},
+	}, nil
 }
 
 // Execute a database query and return the result in JSON format
 func (m *MySQL) Execute(query string) ([]byte, error) {
 	// TODO: I need a way to extract more information like execution time(ms) by the query
 	// prepare the sql statement
-	statement, err := m.Client.Prepare(query)
-	if err != nil {
-		return nil, fmt.Errorf("error preparing sql statement: %v", err)
-	}
-	defer statement.Close()
 
 	// execute the sql statement
-	rows, err := statement.Query()
+	rows, err := m.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
@@ -158,37 +147,31 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 
 // Retrieve the names of tables in the specified database.
 func (m *MySQL) Tables(databaseName string) ([]string, error) {
-	statememt, err := m.Client.Prepare(MYSQL_TABLES_LIST_QUERY)
-	if err != nil {
-		return nil, fmt.Errorf("error preparing sql statement: %v", err)
-	}
-	defer statememt.Close()
 
 	// execute the sql statement
-	rows,err := statememt.Query(databaseName)
-	if err!= nil{
+	rows, err := m.Client.Query(fmt.Sprintf(MYSQL_TABLES_LIST_QUERY, databaseName))
+	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
 	defer rows.Close()
 
 	//scan and append the result
 	var tables []string
-	for rows.Next(){
+	for rows.Next() {
 		var table string
-		if err := rows.Scan(&table); err!= nil{
-			return nil, fmt.Errorf("error scanning database: %v",err)
+		if err := rows.Scan(&table); err != nil {
+			return nil, fmt.Errorf("error scanning database: %v", err)
 		}
 		tables = append(tables, table)
 	}
 
 	// checking for errors in iterating over rows
-	if err := rows.Err(); err!= nil{
-		return nil, fmt.Errorf("error iterating over rows:%v",err)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows:%v", err)
 	}
 
 	return tables, nil
 }
-
 
 func dbURLMySQL(dbConfig *config.Config) string {
 	return fmt.Sprintf(
@@ -200,8 +183,3 @@ func dbURLMySQL(dbConfig *config.Config) string {
 		dbConfig.SSL,
 	)
 }
-
-	
-
-
-
