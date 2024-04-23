@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adarsh-jaiss/Xray/config"
-	"github.com/adarsh-jaiss/Xray/types"
+	"github.com/adarsh-jaiss/xray/config"
+	"github.com/adarsh-jaiss/xray/types"
 )
 
 // DB_PASSWORD is the environment variable that holds the database password.

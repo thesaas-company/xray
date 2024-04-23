@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adarsh-jaiss/Xray/config"
-	"github.com/adarsh-jaiss/Xray/types"
+	"github.com/adarsh-jaiss/xray/config"
+	"github.com/adarsh-jaiss/xray/types"
 	_ "github.com/go-sql-driver/mysql"
 	// "github.com/joho/godotenv"
 )
