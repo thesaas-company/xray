@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/adarsh-jaiss/Xray/types"
+	"github.com/adarsh-jaiss/xray/types"
 )
 
 // setting up a mock db connection
