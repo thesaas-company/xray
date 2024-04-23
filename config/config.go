@@ -1,7 +1,7 @@
 package config
 
 // Add Logging, You can use any lib - DONE!!!
-// TODO: Add code docs --DONE!!!!
+
 // Once we are done with mysql and postgres, Let's rethink about the config structure
 
 

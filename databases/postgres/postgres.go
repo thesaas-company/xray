@@ -55,7 +55,7 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 // Schema returns the schema of a table in the database.
 // It returns an error if the SQL query fails.
 func (p *Postgres) Schema(table string) (types.Table, error) {
-	// TODO: Extract More datapoint if possible -- DONE!!!
+	
 	var response types.Table
 
 	// execute the sql statement

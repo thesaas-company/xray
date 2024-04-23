@@ -57,7 +57,6 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 
 // This method will accept a table name as input and return the table schema (structure).
 func (m *MySQL) Schema(table string) (types.Table, error) {
-	// TODO: Extract More datapoint if possible --DONE!!!!
 	var response types.Table
 
 	// execute the sql statement
@@ -98,8 +97,7 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 
 // Execute a database query and return the result in JSON format
 func (m *MySQL) Execute(query string) ([]byte, error) {
-	// TODO: I need a way to extract more information like execution time(ms) by the query --DONE!!!!
-
+	
 	// execute the sql statement
 	rows, err := m.Client.Query(query)
 	if err != nil {
