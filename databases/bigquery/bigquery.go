@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -64,7 +65,11 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 		return types.Table{}, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
 
 	// scanning the result into and append it into a variable
 	var columns []types.Column
@@ -106,7 +111,11 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
 
 	columns, err := rows.Columns()
 	if err != nil {
@@ -161,7 +170,11 @@ func (b *BigQuery) Tables(dataset string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
-	defer res.Close()
+	defer func() {
+		if err := res.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
 
 	var tables []string
 

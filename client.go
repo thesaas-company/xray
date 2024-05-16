@@ -15,82 +15,55 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
-// NewClientWithConfig creates a new SQL client with the given configuration and database type.
-// It returns an error if the database type is not supported or if there is a problem creating the client.
-func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.ISQL, error) {
-	switch dbType {
-	case types.MySQL:
-		sqlClient, err := mysql.NewMySQLWithConfig(dbConfig)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(sqlClient), nil
-	case types.Postgres:
-		sqlClient, err := postgres.NewPostgresWithConfig(dbConfig)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(sqlClient), nil
-	case types.Snowflake:
-		sqlClient, err := snowflake.NewSnowflakeWithConfig(dbConfig)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(sqlClient), nil
-	case types.BigQuery:
-		bigqueryClient, err := bigquery.NewBigQueryWithConfig(dbConfig)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(bigqueryClient), nil
-	case types.Redshift:
-		redshiftClient, err := redshift.NewRedshiftWithConfig(dbConfig)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(redshiftClient), nil
+type clientCreator func(dbType types.DbType) (types.ISQL, error)
 
+func newClientGeneric(dbType types.DbType, creator clientCreator) (types.ISQL, error) {
+	switch dbType {
+	case types.MySQL, types.Postgres, types.Snowflake, types.BigQuery, types.Redshift:
+		sqlClient, err := creator(dbType)
+		if err != nil {
+			return nil, err
+		}
+		return logger.NewLogger(sqlClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
 	}
 }
 
-// NewClient creates a new SQL client with the given database client and database type.
-// It returns an error if the database type is not supported or if there is a problem creating the client.
-func NewClient(dbClient *sql.DB, dbType types.DbType) (types.ISQL, error) {
+func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.ISQL, error) {
+	return newClientGeneric(dbType, func(dbType types.DbType) (types.ISQL, error) {
+		switch dbType {
+		case types.MySQL:
+			return mysql.NewMySQLWithConfig(dbConfig)
+		case types.Postgres:
+			return postgres.NewPostgresWithConfig(dbConfig)
+		case types.Snowflake:
+			return snowflake.NewSnowflakeWithConfig(dbConfig)
+		case types.BigQuery:
+			return bigquery.NewBigQueryWithConfig(dbConfig)
+		case types.Redshift:
+			return redshift.NewRedshiftWithConfig(dbConfig)
+		default:
+			return nil, fmt.Errorf("unsupported database type: %s", dbType)
+		}
+	})
+}
 
-	switch dbType {
-	case types.MySQL:
-		sqlClient, err := mysql.NewMySQL(dbClient)
-		if err != nil {
-			return nil, err
+func NewClient(dbClient *sql.DB, dbType types.DbType) (types.ISQL, error) {
+	return newClientGeneric(dbType, func(dbType types.DbType) (types.ISQL, error) {
+		switch dbType {
+		case types.MySQL:
+			return mysql.NewMySQL(dbClient)
+		case types.Postgres:
+			return postgres.NewPostgres(dbClient)
+		case types.Snowflake:
+			return snowflake.NewSnowflake(dbClient)
+		case types.BigQuery:
+			return bigquery.NewBigQuery(dbClient)
+		case types.Redshift:
+			return redshift.NewRedshift(dbClient)
+		default:
+			return nil, fmt.Errorf("unsupported database type: %s", dbType)
 		}
-		return logger.NewLogger(sqlClient), nil
-	case types.Postgres:
-		sqlClient, err := postgres.NewPostgres(dbClient)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(sqlClient), nil
-	case types.Snowflake:
-		sqlClient, err := snowflake.NewSnowflake(dbClient)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(sqlClient), nil
-	case types.BigQuery:
-		BigQueryClient, err := bigquery.NewBigQuery(dbClient)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(BigQueryClient), nil
-	case types.Redshift:
-		redshiftClient, err := redshift.NewRedshift(dbClient)
-		if err != nil {
-			return nil, err
-		}
-		return logger.NewLogger(redshiftClient), nil
-	default:
-		return nil, fmt.Errorf("unsupported database type: %s", dbType)
-	}
+	})
 }

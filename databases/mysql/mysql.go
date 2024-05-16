@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -66,7 +67,11 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 		return response, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
 
 	// scanning the result into and append it into a variable
 	var columns []types.Column
@@ -104,7 +109,12 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
 
 	// getting the column names
 	columns, err := rows.Columns()
@@ -154,7 +164,11 @@ func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
 
 	// scan and append the result
 	var tables []string

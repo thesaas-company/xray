@@ -108,7 +108,7 @@ var shellCmd = &cobra.Command{
 			return
 		}
 
-		// Read the YAML file
+		// #nosec G304
 		configData, err := os.ReadFile(cfgFile)
 		if err != nil {
 			fmt.Printf("Error: Failed to read YAML file: %v\n", err)
